@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  hashedPassword String
+  role           String   @default("SALES_REP")
+  avatar         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  deals          Deal[]
+  proposals      Proposal[]
+  approvals      ProposalApproval[]
+  notifications  Notification[]
+  activities     Activity[]
+  contentAssets  ContentAsset[]
+}
+
+model Deal {
+  id             String   @id @default(cuid())
+  company        String   @default("RABORN_MEDIA")
+  companyName    String
+  contactName    String
+  contactEmail   String?
+  contactPhone   String?
+  companyWebsite          String?
+  commissionApplicable    Boolean  @default(false)
+  commissionRecipient     String?
+  coCommissionApplicable  Boolean  @default(false)
+  coCommissionRecipient   String?
+  industry                String?
+  serviceType    String?
+  value          Float    @default(0)
+  stage          String   @default("LEAD")
+  stageEnteredAt DateTime @default(now())
+  ownerId        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner          User       @relation(fields: [ownerId], references: [id])
+  proposals      Proposal[]
+  activities     Activity[]
+}
+
+model Proposal {
+  id            String   @id @default(cuid())
+  dealId        String?
+  company       String   @default("RABORN_MEDIA")
+  industry      String?
+  serviceType   String?
+  title         String
+  status        String   @default("DRAFT")
+  sections      String   @default("[]")
+  pricingItems  String   @default("[]")
+  pricingMode   String   @default("line_items")
+  pricingTiers  String   @default("[]")
+  services      String   @default("[]")
+  repName       String?
+  repTitle      String?
+  repEmail      String?
+  repPhone      String?
+  isTemplate    Boolean  @default(false)
+  templateName  String?
+  expiresAt     DateTime?
+  version       Int      @default(1)
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  deal          Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  createdBy     User              @relation(fields: [createdById], references: [id])
+  approvals     ProposalApproval[]
+  clientAccess  ClientAccess?
+}
+
+model ProposalApproval {
+  id          String    @id @default(cuid())
+  proposalId  String
+  approverId  String
+  status      String    @default("PENDING")
+  comments    String?
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  proposal    Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  approver    User      @relation(fields: [approverId], references: [id])
+}
+
+model ContentAsset {
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  category     String?
+  tags         String   @default("[]")
+  filePath     String?
+  content      String?
+  fileSize     Int?
+  mimeType     String?
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+}
+
+model ClientAccess {
+  id             String    @id @default(cuid())
+  proposalId     String    @unique
+  token          String    @unique
+  signatureImage String?
+  signedAt       DateTime?
+  signedByName   String?
+  signedByEmail  String?
+  status         String    @default("PENDING")
+  viewedAt       DateTime?
+  viewCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+
+  proposal       Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  message     String
+  read        Boolean  @default(false)
+  relatedId   String?
+  relatedType String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  dealId      String
+  type        String
+  description String
+  userId      String
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+}
