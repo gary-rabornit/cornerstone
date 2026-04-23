@@ -54,6 +54,7 @@ export function SignatureSection({
     referenceId: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [missingFields, setMissingFields] = useState<string[]>([])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sigCanvasRef = useRef<any>(null)
@@ -87,30 +88,19 @@ export function SignatureSection({
   }
 
   async function handleSign() {
-    if (!consented) {
-      setError('You must consent to sign electronically before proceeding.')
-      return
-    }
-    if (!fullName.trim()) {
-      setError('Please enter your full legal name.')
-      return
-    }
-    if (!email.trim()) {
-      setError('Please enter your email address.')
-      return
-    }
-    if (!title.trim()) {
-      setError('Please enter your title or position.')
-      return
-    }
-    if (!phone.trim()) {
-      setError('Please enter your phone number.')
-      return
-    }
+    // Collect all missing fields so the user can see everything they still need
+    const missing: string[] = []
+    if (!fullName.trim()) missing.push('Full Legal Name')
+    if (!email.trim()) missing.push('Email')
+    if (!title.trim()) missing.push('Title / Position')
+    if (!phone.trim()) missing.push('Phone Number')
+    if (!consented) missing.push('Electronic Signature Consent (checkbox)')
 
     const signatureImage = getSignatureImage()
-    if (!signatureImage) {
-      setError(mode === 'draw' ? 'Please draw your signature.' : 'Please type your signature.')
+    if (!signatureImage) missing.push(mode === 'draw' ? 'Drawn Signature' : 'Typed Signature')
+
+    if (missing.length > 0) {
+      setMissingFields(missing)
       return
     }
 
@@ -527,6 +517,60 @@ export function SignatureSection({
           </div>
         </div>
       </div>
+
+      {/* Missing Fields Modal */}
+      {missingFields.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMissingFields([])}
+          />
+          <div className="relative w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 bg-amber-50 border-b border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-amber-900">Missing Information</h3>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Please complete all required fields before signing.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700 mb-3">
+                The following {missingFields.length === 1 ? 'field needs' : 'fields need'} to be filled in:
+              </p>
+              <ul className="space-y-2">
+                {missingFields.map((field) => (
+                  <li
+                    key={field}
+                    className="flex items-start gap-2.5 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-800"
+                  >
+                    <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span className="font-medium">{field}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500 mt-4">
+                Scroll up to fill out the missing {missingFields.length === 1 ? 'field' : 'fields'} and try again.
+              </p>
+            </div>
+
+            <div className="flex justify-end border-t border-gray-200 px-6 py-4 bg-gray-50">
+              <button
+                onClick={() => setMissingFields([])}
+                className="rounded-lg bg-[#003964] px-5 py-2 text-sm font-semibold text-white hover:bg-[#003964]/90 transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
