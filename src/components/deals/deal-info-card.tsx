@@ -305,11 +305,13 @@ export function DealInfoCard({ deal, users }: DealInfoCardProps) {
             Deal Value ($)
           </label>
           <input
-            type="number"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            min="0"
-            step="100"
+            type="text"
+            inputMode="numeric"
+            value={value ? Number(value).toLocaleString('en-US') : ''}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^\d]/g, '')
+              setValue(digits)
+            }}
             className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:border-[#003964] focus:ring-2 focus:ring-[#003964]/20 focus:outline-none"
           />
         </div>

@@ -766,12 +766,14 @@ export default function NewProposalPage() {
               </label>
               <input
                 id="dealValue"
-                type="number"
-                value={dealValue}
-                onChange={(e) => setDealValue(e.target.value)}
-                min="0"
-                step="100"
-                placeholder="e.g. 10000"
+                type="text"
+                inputMode="numeric"
+                value={dealValue ? Number(dealValue).toLocaleString('en-US') : ''}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/[^\d]/g, '')
+                  setDealValue(digits)
+                }}
+                placeholder="e.g. 10,000"
                 className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#00CFF8] focus:outline-none focus:ring-1 focus:ring-[#00CFF8]"
               />
             </div>

@@ -414,13 +414,15 @@ export function NewDealModal({ open, onClose }: NewDealModalProps) {
               Deal Value ($)
             </label>
             <input
-              type="number"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              min="0"
-              step="100"
+              type="text"
+              inputMode="numeric"
+              value={value ? Number(value).toLocaleString('en-US') : ''}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^\d]/g, '')
+                setValue(digits)
+              }}
               className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#003964] focus:ring-2 focus:ring-[#003964]/20 focus:outline-none transition-colors"
-              placeholder="10000"
+              placeholder="10,000"
             />
           </div>
 
