@@ -20,6 +20,7 @@ import {
   ExternalLink,
   X,
   Copy,
+  Shield,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getCompanyBranding } from '@/lib/companies'
@@ -306,6 +307,16 @@ export default function ProposalEditorPage() {
             <Eye className="h-4 w-4" />
             Preview
           </Link>
+
+          {(proposal.status === 'SENT' || proposal.status === 'SIGNED' || proposal.status === 'DECLINED') && (
+            <Link
+              href={`/proposals/${proposalId}/audit-trail`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              Audit Trail
+            </Link>
+          )}
 
           {proposal.status === 'DRAFT' && (
             <button

@@ -1,9 +1,19 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import { ProposalRenderer } from '@/components/client/proposal-renderer'
 import { SignatureSection } from '@/components/client/signature-section'
 import { CheckCircle, Clock, XCircle } from 'lucide-react'
+import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
+
+interface AuditEvent {
+  timestamp: string
+  event: string
+  details?: Record<string, unknown>
+  ipAddress?: string
+  userAgent?: string
+}
 
 interface Props {
   params: Promise<{ token: string }>
@@ -28,14 +38,46 @@ export default async function ClientProposalPage({ params }: Props) {
     notFound()
   }
 
-  // Fire-and-forget: update view count and viewedAt
-  prisma.clientAccess.update({
-    where: { id: clientAccess.id },
-    data: {
-      viewedAt: new Date(),
-      viewCount: { increment: 1 },
-    },
-  }).catch(() => {})
+  // Capture viewer info for audit trail
+  const hdrs = await headers()
+  const forwarded = hdrs.get('x-forwarded-for')
+  const realIp = hdrs.get('x-real-ip')
+  const viewerIp = forwarded?.split(',')[0].trim() || realIp?.trim() || 'unknown'
+  const viewerUa = hdrs.get('user-agent') || 'unknown'
+
+  // Fire-and-forget: update view count and append to audit trail
+  ;(async () => {
+    try {
+      let existingAudit: AuditEvent[] = []
+      try { existingAudit = JSON.parse(clientAccess.auditTrail || '[]') } catch {}
+
+      // Only add a VIEW event if it's been >10 minutes since last view (avoid spam on refreshes)
+      const lastViewEvent = [...existingAudit].reverse().find(e => e.event === 'PROPOSAL_VIEWED')
+      const shouldLog = !lastViewEvent ||
+        (Date.now() - new Date(lastViewEvent.timestamp).getTime()) > 10 * 60 * 1000
+
+      const updates: Record<string, unknown> = {
+        viewedAt: new Date(),
+        viewCount: { increment: 1 },
+      }
+
+      if (shouldLog) {
+        existingAudit.push({
+          timestamp: new Date().toISOString(),
+          event: 'PROPOSAL_VIEWED',
+          details: { viewCount: clientAccess.viewCount + 1 },
+          ipAddress: viewerIp,
+          userAgent: viewerUa,
+        })
+        updates.auditTrail = JSON.stringify(existingAudit)
+      }
+
+      await prisma.clientAccess.update({
+        where: { id: clientAccess.id },
+        data: updates,
+      })
+    } catch {}
+  })()
 
   const { proposal } = clientAccess
 
@@ -130,10 +172,19 @@ export default async function ClientProposalPage({ params }: Props) {
     )
   }
 
+  const rabornCompanyName = getCompanyBranding(proposal.company).name
+
   return (
     <div>
       <ProposalRenderer {...rendererProps} />
-      <SignatureSection token={token} proposalTitle={proposal.title} />
+      <SignatureSection
+        token={token}
+        proposalTitle={proposal.title}
+        proposalVersion={proposal.version}
+        clientCompanyName={proposal.deal?.companyName || undefined}
+        dealValue={proposal.deal?.value || undefined}
+        rabornCompany={rabornCompanyName}
+      />
     </div>
   )
 }

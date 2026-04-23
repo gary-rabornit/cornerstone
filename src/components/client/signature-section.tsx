@@ -2,7 +2,10 @@
 
 import { useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { Pen, Type, CheckCircle, XCircle, Loader2, Eraser } from 'lucide-react'
+import {
+  Pen, Type, CheckCircle, XCircle, Loader2, Eraser,
+  Shield, FileText, AlertTriangle,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -20,18 +23,35 @@ const SignatureCanvas = dynamic(() => import('react-signature-canvas') as any, {
 interface SignatureSectionProps {
   token: string
   proposalTitle: string
+  proposalVersion: number
+  clientCompanyName?: string
+  dealValue?: number
+  rabornCompany: string
 }
 
 type SignatureMode = 'draw' | 'type'
 
-export function SignatureSection({ token, proposalTitle }: SignatureSectionProps) {
+export function SignatureSection({
+  token,
+  proposalTitle,
+  proposalVersion,
+  clientCompanyName,
+  dealValue,
+  rabornCompany,
+}: SignatureSectionProps) {
   const [mode, setMode] = useState<SignatureMode>('draw')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [title, setTitle] = useState('')
   const [typedSignature, setTypedSignature] = useState('')
+  const [consented, setConsented] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<'signed' | 'declined' | null>(null)
+  const [successData, setSuccessData] = useState<{
+    signedAt: string
+    signedByName: string
+    referenceId: string
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +69,6 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
       return sigCanvasRef.current.toDataURL('image/png')
     } else {
       if (!typedSignature.trim()) return null
-      // Render typed signature on a canvas
       const canvas = document.createElement('canvas')
       canvas.width = 500
       canvas.height = 120
@@ -67,6 +86,10 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
   }
 
   async function handleSign() {
+    if (!consented) {
+      setError('You must consent to sign electronically before proceeding.')
+      return
+    }
     if (!fullName.trim() || !email.trim()) {
       setError('Please fill in your full name and email.')
       return
@@ -91,6 +114,8 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
           signedByEmail: email.trim(),
           signedByTitle: title.trim() || undefined,
           signatureImage,
+          signatureMode: mode,
+          consentedToElectronicSig: true,
         }),
       })
 
@@ -99,6 +124,12 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
         throw new Error(data.error || 'Failed to sign proposal')
       }
 
+      const data = await res.json()
+      setSuccessData({
+        signedAt: data.signedAt || new Date().toISOString(),
+        signedByName: fullName.trim(),
+        referenceId: data.referenceId || token.slice(0, 12).toUpperCase(),
+      })
       setSuccess('signed')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -137,6 +168,7 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
     }
   }
 
+  // ───────── Success: Signed ─────────
   if (success === 'signed') {
     return (
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -145,19 +177,48 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-green-900 mb-2">
-            Thank You!
+            Proposal Signed Successfully
           </h2>
-          <p className="text-green-700 text-lg">
-            You have successfully signed &ldquo;{proposalTitle}&rdquo;.
+          <p className="text-green-700 text-lg mb-6">
+            Thank you for signing &ldquo;{proposalTitle}&rdquo;.
           </p>
-          <p className="text-green-600 text-sm mt-2">
-            A confirmation has been sent to your email.
+
+          {/* Certificate of Completion */}
+          <div className="bg-white border border-green-200 rounded-lg p-6 max-w-lg mx-auto text-left">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Certificate of Completion
+            </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Signed by:</span>
+                <span className="font-medium text-gray-900">{successData?.signedByName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Signed at:</span>
+                <span className="font-medium text-gray-900">
+                  {successData && new Date(successData.signedAt).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Document version:</span>
+                <span className="font-medium text-gray-900">v{proposalVersion}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Reference ID:</span>
+                <span className="font-mono text-xs text-gray-900">{successData?.referenceId}</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-green-600 text-sm mt-6">
+            A confirmation email has been sent to your inbox with a copy of the signed proposal.
           </p>
         </div>
       </div>
     )
   }
 
+  // ───────── Success: Declined ─────────
   if (success === 'declined') {
     return (
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -176,56 +237,161 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
     )
   }
 
+  // ───────── Main Signature Form ─────────
+  const formattedValue = dealValue
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(dealValue)
+    : null
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-6 py-12 space-y-6">
+      {/* Agreement Summary */}
+      <div className="bg-white border-2 border-[#003964] rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 sm:px-8 py-5 bg-[#003964] text-white">
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-[#00CFF8]" />
+            <h2 className="text-lg font-bold">Agreement Summary</h2>
+          </div>
+          <p className="text-xs text-blue-100 mt-1">
+            Please review the terms below before signing.
+          </p>
+        </div>
+        <div className="px-6 sm:px-8 py-5 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Agreement</p>
+              <p className="mt-1 font-semibold text-gray-900">{proposalTitle}</p>
+            </div>
+            {clientCompanyName && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Between</p>
+                <p className="mt-1 font-semibold text-gray-900">{rabornCompany} &amp; {clientCompanyName}</p>
+              </div>
+            )}
+            {formattedValue && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Value</p>
+                <p className="mt-1 font-semibold text-[#003964]">{formattedValue}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Document Version</p>
+              <p className="mt-1 font-semibold text-gray-900">v{proposalVersion}</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+            By signing below, you agree to the full terms detailed in the proposal above.
+          </p>
+        </div>
+      </div>
+
+      {/* Signature Section */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Header */}
         <div className="px-6 sm:px-8 py-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
           <h2 className="text-xl font-bold text-[#003964]">Sign This Proposal</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Please review the proposal above, then sign below to accept.
+            Complete the fields below to electronically accept this agreement.
           </p>
         </div>
 
         <div className="px-6 sm:px-8 py-8 space-y-6">
-          {/* Error */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               {error}
             </div>
           )}
 
           {/* Contact Information */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Full Name *"
-              value={fullName}
-              onChange={e => setFullName(e.target.value)}
-              placeholder="John Smith"
-            />
-            <Input
-              label="Email *"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="john@company.com"
-            />
-          </div>
-          <Input
-            label="Title / Position"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="e.g. CEO, Marketing Director"
-          />
-
-          {/* Signature Mode Toggle */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Signature
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Signer Information
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Full Legal Name *"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                placeholder="John Smith"
+              />
+              <Input
+                label="Email *"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="john@company.com"
+              />
+            </div>
+            <div className="mt-4">
+              <Input
+                label="Title / Position"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="e.g. CEO, Marketing Director"
+              />
+            </div>
+          </div>
+
+          {/* ESIGN Consent Disclosure */}
+          <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="h-5 w-5 text-amber-600" />
+              <h3 className="text-sm font-bold text-amber-900">
+                Electronic Signature Consent
+              </h3>
+            </div>
+            <div className="space-y-2 text-xs text-amber-900 leading-relaxed">
+              <p>
+                By checking the box below, you agree to the following:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  You consent to conduct business electronically and to sign this agreement
+                  using an electronic signature (the &ldquo;E-SIGN Act,&rdquo; 15 U.S.C. &sect; 7001, and UETA).
+                </li>
+                <li>
+                  You understand that your electronic signature has the same legal effect
+                  as a handwritten signature.
+                </li>
+                <li>
+                  You have had the opportunity to review the full proposal above, and your
+                  signature confirms agreement to its terms.
+                </li>
+                <li>
+                  You may request a paper copy or withdraw consent at any time before signing
+                  by contacting the sender.
+                </li>
+                <li>
+                  This signature will be linked to document version <strong>v{proposalVersion}</strong> and
+                  cannot be altered once submitted.
+                </li>
+              </ul>
+            </div>
+            <label className="mt-4 flex items-start gap-3 cursor-pointer p-3 -mx-1 rounded-md hover:bg-amber-100/50 transition-colors">
+              <input
+                type="checkbox"
+                checked={consented}
+                onChange={(e) => setConsented(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
+              />
+              <span className="text-sm font-semibold text-amber-900">
+                I agree and consent to sign this agreement electronically.
+              </span>
+            </label>
+          </div>
+
+          {/* Signature Pad */}
+          <div className={cn(
+            'transition-opacity',
+            !consented && 'opacity-50 pointer-events-none'
+          )}>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Your Signature {!consented && <span className="text-xs font-normal text-gray-400 ml-2">(consent required first)</span>}
             </label>
             <div className="flex items-center gap-2 mb-3">
               <button
+                type="button"
                 onClick={() => setMode('draw')}
+                disabled={!consented}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   mode === 'draw'
@@ -237,7 +403,9 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
                 Draw
               </button>
               <button
+                type="button"
                 onClick={() => setMode('type')}
+                disabled={!consented}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   mode === 'type'
@@ -266,7 +434,9 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
                   />
                 </div>
                 <button
+                  type="button"
                   onClick={clearSignature}
+                  disabled={!consented}
                   className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   <Eraser className="h-3 w-3" />
@@ -294,9 +464,16 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
             )}
           </div>
 
+          {/* Legal notice */}
+          <p className="text-xs text-gray-500 text-center border-t border-gray-100 pt-4">
+            Clicking &ldquo;Accept &amp; Sign&rdquo; below constitutes your electronic signature and
+            legally binds you to the terms of this agreement.
+          </p>
+
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <button
+              type="button"
               onClick={handleDecline}
               disabled={loading}
               className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
@@ -308,8 +485,9 @@ export function SignatureSection({ token, proposalTitle }: SignatureSectionProps
             <Button
               onClick={handleSign}
               loading={loading}
+              disabled={!consented}
               size="lg"
-              className="bg-green-600 hover:bg-green-700 focus:ring-green-500 w-full sm:w-auto"
+              className="bg-green-600 hover:bg-green-700 focus:ring-green-500 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckCircle className="h-4 w-4" />
               Accept &amp; Sign

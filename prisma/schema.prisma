@@ -115,11 +115,27 @@ model ClientAccess {
   id             String    @id @default(cuid())
   proposalId     String    @unique
   token          String    @unique
+
+  // Signature data
   signatureImage String?
+  signatureMode  String?   // "draw" | "type"
   signedAt       DateTime?
   signedByName   String?
   signedByEmail  String?
+  signedByTitle  String?
   status         String    @default("PENDING")
+
+  // E-signature compliance
+  consentedToElectronicSig Boolean   @default(false)
+  consentedAt              DateTime?
+  ipAddress                String?
+  userAgent                String?
+  documentSnapshot         String?   // JSON snapshot of proposal at time of signing
+  documentHash             String?   // SHA-256 hash of documentSnapshot for integrity
+  signedVersion            Int?      // Proposal.version at time of signing
+  auditTrail               String    @default("[]")  // JSON array of audit events
+
+  // View tracking
   viewedAt       DateTime?
   viewCount      Int       @default(0)
   createdAt      DateTime  @default(now())
