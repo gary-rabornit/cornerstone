@@ -30,6 +30,7 @@ export async function POST(
     signedByName,
     signedByEmail,
     signedByTitle,
+    signedByPhone,
     signatureImage,
     signatureMode,
     consentedToElectronicSig,
@@ -40,12 +41,20 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
-  // For SIGNED status, enforce consent
-  if (status === 'SIGNED' && !consentedToElectronicSig) {
-    return NextResponse.json(
-      { error: 'Electronic signature consent is required' },
-      { status: 400 }
-    )
+  // For SIGNED status, enforce consent and required signer fields
+  if (status === 'SIGNED') {
+    if (!consentedToElectronicSig) {
+      return NextResponse.json(
+        { error: 'Electronic signature consent is required' },
+        { status: 400 }
+      )
+    }
+    if (!signedByName || !signedByEmail || !signedByTitle || !signedByPhone) {
+      return NextResponse.json(
+        { error: 'Name, email, title, and phone number are all required to sign' },
+        { status: 400 }
+      )
+    }
   }
 
   const clientAccess = await prisma.clientAccess.findUnique({
@@ -129,6 +138,7 @@ export async function POST(
         signedByName,
         signedByEmail,
         signedByTitle: signedByTitle || null,
+        signedByPhone: signedByPhone || null,
         signatureMode: signatureMode || 'unknown',
         documentVersion: proposal.version,
         documentHash,
@@ -169,6 +179,7 @@ export async function POST(
       signedByName: signedByName || null,
       signedByEmail: signedByEmail || null,
       signedByTitle: signedByTitle || null,
+      signedByPhone: signedByPhone || null,
       signatureImage: signatureImage || null,
       signatureMode: signatureMode || null,
       signedAt,

@@ -69,6 +69,7 @@ export async function GET(
           signedByName: clientAccess.signedByName,
           signedByEmail: clientAccess.signedByEmail,
           signedByTitle: clientAccess.signedByTitle,
+          signedByPhone: clientAccess.signedByPhone,
           signatureImage: clientAccess.signatureImage,
           signatureMode: clientAccess.signatureMode,
           ipAddress: clientAccess.ipAddress,

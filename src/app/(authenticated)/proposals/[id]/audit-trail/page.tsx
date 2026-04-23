@@ -4,7 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Shield, CheckCircle, Eye, FileCheck,
-  AlertCircle, Globe, Clock, User, Mail, Hash, Fingerprint,
+  AlertCircle, Globe, Clock, User, Mail, Phone, Hash, Fingerprint,
   Download, FileText,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -121,6 +121,7 @@ export default async function AuditTrailPage({
             <Field icon={User} label="Signed By" value={access.signedByName || '—'} />
             <Field icon={Mail} label="Email" value={access.signedByEmail || '—'} />
             {access.signedByTitle && <Field icon={User} label="Title / Role" value={access.signedByTitle} />}
+            {access.signedByPhone && <Field icon={Phone} label="Phone" value={access.signedByPhone} />}
             <Field icon={Clock} label="Signed At" value={access.signedAt ? new Date(access.signedAt).toLocaleString() : '—'} />
             <Field icon={Globe} label="IP Address" value={access.ipAddress || '—'} mono />
             <Field icon={Hash} label="Document Version" value={`v${access.signedVersion || proposal.version}`} />

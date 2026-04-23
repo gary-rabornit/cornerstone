@@ -39,10 +39,11 @@ export function SignatureSection({
   dealValue,
   rabornCompany,
 }: SignatureSectionProps) {
-  const [mode, setMode] = useState<SignatureMode>('draw')
+  const [mode, setMode] = useState<SignatureMode>('type')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [title, setTitle] = useState('')
+  const [phone, setPhone] = useState('')
   const [typedSignature, setTypedSignature] = useState('')
   const [consented, setConsented] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -90,8 +91,20 @@ export function SignatureSection({
       setError('You must consent to sign electronically before proceeding.')
       return
     }
-    if (!fullName.trim() || !email.trim()) {
-      setError('Please fill in your full name and email.')
+    if (!fullName.trim()) {
+      setError('Please enter your full legal name.')
+      return
+    }
+    if (!email.trim()) {
+      setError('Please enter your email address.')
+      return
+    }
+    if (!title.trim()) {
+      setError('Please enter your title or position.')
+      return
+    }
+    if (!phone.trim()) {
+      setError('Please enter your phone number.')
       return
     }
 
@@ -112,7 +125,8 @@ export function SignatureSection({
           status: 'SIGNED',
           signedByName: fullName.trim(),
           signedByEmail: email.trim(),
-          signedByTitle: title.trim() || undefined,
+          signedByTitle: title.trim(),
+          signedByPhone: phone.trim(),
           signatureImage,
           signatureMode: mode,
           consentedToElectronicSig: true,
@@ -323,12 +337,28 @@ export function SignatureSection({
                 placeholder="john@company.com"
               />
             </div>
-            <div className="mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <Input
-                label="Title / Position"
+                label="Title / Position *"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="e.g. CEO, Marketing Director"
+              />
+              <Input
+                label="Phone Number *"
+                type="tel"
+                value={phone}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                  let formatted = digits
+                  if (digits.length > 6) {
+                    formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+                  } else if (digits.length > 3) {
+                    formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
+                  }
+                  setPhone(formatted)
+                }}
+                placeholder="555-555-5555"
               />
             </div>
           </div>
@@ -392,20 +422,6 @@ export function SignatureSection({
             <div className="flex items-center gap-2 mb-3">
               <button
                 type="button"
-                onClick={() => setMode('draw')}
-                disabled={!consented}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  mode === 'draw'
-                    ? 'bg-[#003964] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                )}
-              >
-                <Pen className="h-4 w-4" />
-                Draw
-              </button>
-              <button
-                type="button"
                 onClick={() => setMode('type')}
                 disabled={!consented}
                 className={cn(
@@ -417,6 +433,20 @@ export function SignatureSection({
               >
                 <Type className="h-4 w-4" />
                 Type
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('draw')}
+                disabled={!consented}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  mode === 'draw'
+                    ? 'bg-[#003964] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                )}
+              >
+                <Pen className="h-4 w-4" />
+                Draw
               </button>
             </div>
 

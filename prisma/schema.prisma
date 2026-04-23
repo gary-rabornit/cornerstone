@@ -123,6 +123,7 @@ model ClientAccess {
   signedByName   String?
   signedByEmail  String?
   signedByTitle  String?
+  signedByPhone  String?
   status         String    @default("PENDING")
 
   // E-signature compliance

@@ -32,6 +32,7 @@ interface CertificatePDFProps {
     signedByName: string | null
     signedByEmail: string | null
     signedByTitle: string | null
+    signedByPhone: string | null
     signatureImage: string | null
     signatureMode: string | null
     ipAddress: string | null
@@ -238,6 +239,12 @@ export function CertificatePDF({ proposal, access, rabornLogoUrl }: CertificateP
                 <View style={styles.col}>
                   <Text style={styles.label}>Title / Role</Text>
                   <Text style={styles.value}>{access.signedByTitle}</Text>
+                </View>
+              )}
+              {access.signedByPhone && (
+                <View style={styles.col}>
+                  <Text style={styles.label}>Phone</Text>
+                  <Text style={styles.value}>{access.signedByPhone}</Text>
                 </View>
               )}
               <View style={styles.col}>

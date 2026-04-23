@@ -35,6 +35,7 @@ interface SignedProposalPDFProps {
     signedByName: string | null
     signedByEmail: string | null
     signedByTitle: string | null
+    signedByPhone: string | null
     signatureImage: string | null
     signatureMode: string | null
     ipAddress: string | null
@@ -366,6 +367,12 @@ export function SignedProposalPDF({ proposal, access, rabornLogoUrl }: SignedPro
               <View style={styles.certCol}>
                 <Text style={styles.certLabel}>Title / Role</Text>
                 <Text style={styles.certValue}>{access.signedByTitle}</Text>
+              </View>
+            )}
+            {access.signedByPhone && (
+              <View style={styles.certCol}>
+                <Text style={styles.certLabel}>Phone</Text>
+                <Text style={styles.certValue}>{access.signedByPhone}</Text>
               </View>
             )}
             <View style={styles.certCol}>
