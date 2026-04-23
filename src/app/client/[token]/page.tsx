@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { ProposalRenderer } from '@/components/client/proposal-renderer'
 import { SignatureSection } from '@/components/client/signature-section'
-import { CheckCircle, Clock, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, Download } from 'lucide-react'
 import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
 
@@ -150,6 +150,17 @@ export default async function ClientProposalPage({ params }: Props) {
                 <img src={clientAccess.signatureImage} alt="Signature" className="max-h-20" />
               </div>
             )}
+
+            {/* Download signed PDF */}
+            <div className="mt-6">
+              <a
+                href={`/api/client/${token}/signed-pdf`}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Download Signed Copy
+              </a>
+            </div>
           </div>
         </div>
       </div>

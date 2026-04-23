@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Shield, CheckCircle, Eye, FileCheck,
   AlertCircle, Globe, Clock, User, Mail, Hash, Fingerprint,
+  Download, FileText,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { getCompanyBranding } from '@/lib/companies'
@@ -61,19 +62,43 @@ export default async function AuditTrailPage({
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          href={`/proposals/${id}`}
-          className="rounded-lg p-2 text-gray-400 hover:bg-white hover:text-gray-600 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-[#003964]">Audit Trail</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Complete history of this proposal&rsquo;s electronic signature process.
-          </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/proposals/${id}`}
+            className="rounded-lg p-2 text-gray-400 hover:bg-white hover:text-gray-600 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-[#003964]">Audit Trail</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Complete history of this proposal&rsquo;s electronic signature process.
+            </p>
+          </div>
         </div>
+
+        {/* Download buttons */}
+        {access && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {access.status === 'SIGNED' && (
+              <a
+                href={`/api/proposals/${id}/signed-pdf`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#003964] px-3 py-2 text-sm font-semibold text-white hover:bg-[#003964]/90 transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+                Signed Proposal PDF
+              </a>
+            )}
+            <a
+              href={`/api/proposals/${id}/certificate`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Certificate
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Certificate Card (if signed) */}

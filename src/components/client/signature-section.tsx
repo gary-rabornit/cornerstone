@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import {
   Pen, Type, CheckCircle, XCircle, Loader2, Eraser,
-  Shield, FileText, AlertTriangle,
+  Shield, FileText, AlertTriangle, Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -210,8 +210,18 @@ export function SignatureSection({
             </div>
           </div>
 
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href={`/api/client/${token}/signed-pdf`}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download Signed Copy
+            </a>
+          </div>
+
           <p className="text-green-600 text-sm mt-6">
-            A confirmation email has been sent to your inbox with a copy of the signed proposal.
+            A confirmation email has been sent to your inbox.
           </p>
         </div>
       </div>
