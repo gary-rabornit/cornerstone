@@ -200,10 +200,6 @@ export function SignatureSection({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Document version:</span>
-                <span className="font-medium text-gray-900">v{proposalVersion}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-500">Reference ID:</span>
                 <span className="font-mono text-xs text-gray-900">{successData?.referenceId}</span>
               </div>
@@ -283,10 +279,6 @@ export function SignatureSection({
                 <p className="mt-1 font-semibold text-[#003964]">{formattedValue}</p>
               </div>
             )}
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Document Version</p>
-              <p className="mt-1 font-semibold text-gray-900">v{proposalVersion}</p>
-            </div>
           </div>
           <p className="text-xs text-gray-500 pt-2 border-t border-gray-100">
             By signing below, you agree to the full terms detailed in the proposal above.
@@ -371,7 +363,7 @@ export function SignatureSection({
                   by contacting the sender.
                 </li>
                 <li>
-                  This signature will be linked to document version <strong>v{proposalVersion}</strong> and
+                  This signature will be permanently linked to this specific proposal and
                   cannot be altered once submitted.
                 </li>
               </ul>
