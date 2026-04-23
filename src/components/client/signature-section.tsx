@@ -379,10 +379,6 @@ export function SignatureSection({
                   signature confirms agreement to its terms.
                 </li>
                 <li>
-                  You may request a paper copy or withdraw consent at any time before signing
-                  by contacting the sender.
-                </li>
-                <li>
                   This signature will be permanently linked to this specific proposal and
                   cannot be altered once submitted.
                 </li>
