@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createNotification } from '@/lib/notifications'
 import { advanceDealStage } from '@/lib/deal-stage'
+import { sendEmail } from '@/lib/email'
+import { signedConfirmationToClientEmail, signedNotificationToInternalEmail } from '@/lib/email-signing'
+import { getCompanyBranding } from '@/lib/companies'
 import { createHash } from 'crypto'
 
 interface AuditEvent {
@@ -227,6 +230,51 @@ export async function POST(
       ? `Client signed proposal "${proposal.title}" — deal closed won`
       : `Client declined proposal "${proposal.title}" — deal closed lost`
     await advanceDealStage(proposal.dealId, targetStage, proposal.createdById, stageDesc)
+  }
+
+  // ─── Signing confirmation emails ───────────────────────────────
+  if (status === 'SIGNED' && signedByEmail) {
+    const referenceId = updated.id.slice(0, 12).toUpperCase()
+    const signedAtFormatted = signedAt.toLocaleString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    })
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const signedPdfUrl = `${APP_URL}/api/client/${token}/signed-pdf`
+    const auditTrailUrl = `${APP_URL}/proposals/${proposal.id}/audit-trail`
+    const rabornCompanyName = getCompanyBranding(proposal.company).name
+
+    // 1) Confirmation email to the signer (client)
+    const clientEmail = signedConfirmationToClientEmail({
+      signerName: signedByName || 'there',
+      proposalTitle: proposal.title,
+      clientCompanyName: proposal.deal?.companyName,
+      signedAt: signedAtFormatted,
+      referenceId,
+      rabornCompany: rabornCompanyName,
+      signedPdfUrl,
+    })
+    sendEmail({ to: signedByEmail, subject: clientEmail.subject, html: clientEmail.html }).catch(() => {})
+
+    // 2) Notification email to the internal proposal creator
+    const creator = await prisma.user.findUnique({
+      where: { id: proposal.createdById },
+      select: { name: true, email: true },
+    })
+    if (creator?.email) {
+      const internalEmail = signedNotificationToInternalEmail({
+        recipientName: creator.name || 'there',
+        signerName: signedByName || 'The client',
+        signerEmail: signedByEmail,
+        signerTitle: signedByTitle,
+        proposalTitle: proposal.title,
+        clientCompanyName: proposal.deal?.companyName,
+        signedAt: signedAtFormatted,
+        referenceId,
+        auditTrailUrl,
+      })
+      sendEmail({ to: creator.email, subject: internalEmail.subject, html: internalEmail.html }).catch(() => {})
+    }
   }
 
   return NextResponse.json({
