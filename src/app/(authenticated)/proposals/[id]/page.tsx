@@ -76,6 +76,10 @@ export default function ProposalEditorPage() {
   const [approvalModalOpen, setApprovalModalOpen] = useState(false)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [sendModalOpen, setSendModalOpen] = useState(false)
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false)
+  const [confirmedEmail, setConfirmedEmail] = useState('')
+  const [sendError, setSendError] = useState('')
+  const [sending, setSending] = useState(false)
   const [clientUrl, setClientUrl] = useState('')
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -195,18 +199,51 @@ export default function ProposalEditorPage() {
     }
   }
 
-  async function handleSendToClient() {
+  function openSendConfirm() {
+    setConfirmedEmail(proposal?.deal?.contactEmail || '')
+    setSendError('')
+    setConfirmSendOpen(true)
+  }
+
+  async function confirmAndSend() {
+    const trimmed = confirmedEmail.trim()
+    if (!trimmed) {
+      setSendError('Client email is required')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmed)) {
+      setSendError('Please enter a valid email address')
+      return
+    }
+    const original = (proposal?.deal?.contactEmail || '').trim().toLowerCase()
+    if (original && original !== trimmed.toLowerCase()) {
+      // Email changed from what's on the deal — require explicit re-entry
+      setSendError('')
+    }
+
+    setSending(true)
+    setSendError('')
+
     try {
       const res = await fetch(`/api/proposals/${proposalId}/send`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientEmail: trimmed }),
       })
-      if (!res.ok) throw new Error('Failed to send')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to send')
+      }
       const data = await res.json()
       setClientUrl(data.clientUrl || `${window.location.origin}/client/proposals/${proposalId}`)
+      setConfirmSendOpen(false)
       setSendModalOpen(true)
       fetchProposal()
-    } catch {
-      // Error handling
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setSending(false)
     }
   }
 
@@ -330,7 +367,7 @@ export default function ProposalEditorPage() {
 
           {proposal.status === 'APPROVED' && (
             <button
-              onClick={handleSendToClient}
+              onClick={openSendConfirm}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#00CFF8] px-3 py-2 text-sm font-semibold text-white hover:bg-[#00b8dd] transition-colors"
             >
               <Send className="h-4 w-4" />
@@ -369,6 +406,106 @@ export default function ProposalEditorPage() {
         isOpen={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
       />
+
+      {/* Confirm Send Modal — verify email before sending */}
+      {confirmSendOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !sending && setConfirmSendOpen(false)}
+          />
+          <div className="relative w-full max-w-md mx-4 rounded-xl border border-gray-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <Send className="h-5 w-5 text-[#00CFF8]" />
+                <h2 className="text-lg font-semibold text-[#003964]">
+                  Send to Client
+                </h2>
+              </div>
+              <button
+                onClick={() => !sending && setConfirmSendOpen(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                The proposal will be emailed to the client at the address below.
+                Please confirm the email is correct before sending.
+              </p>
+
+              <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Client</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {proposal?.deal?.contactName || 'Unknown'}
+                  {proposal?.deal?.companyName && (
+                    <span className="text-gray-500 font-normal"> · {proposal.deal.companyName}</span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Client Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={confirmedEmail}
+                  onChange={(e) => setConfirmedEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 focus:border-[#003964] focus:ring-2 focus:ring-[#003964]/20 focus:outline-none"
+                  placeholder="client@example.com"
+                  autoFocus
+                />
+                {proposal?.deal?.contactEmail && proposal.deal.contactEmail.toLowerCase() !== confirmedEmail.trim().toLowerCase() && confirmedEmail.trim() && (
+                  <p className="mt-1.5 text-xs text-amber-600">
+                    ⚠ This differs from the email on the deal ({proposal.deal.contactEmail}).
+                    The deal record will be updated.
+                  </p>
+                )}
+              </div>
+
+              {sendError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                  {sendError}
+                </div>
+              )}
+
+              <div className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">
+                <strong>Before sending:</strong> Once you click Send, the client will receive an email
+                with a unique link to view and sign the proposal. They will be able to review all terms
+                and provide an electronic signature.
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-gray-200 px-6 py-4">
+              <button
+                onClick={() => setConfirmSendOpen(false)}
+                disabled={sending}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmAndSend}
+                disabled={sending || !confirmedEmail.trim()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00CFF8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#00b8dd] transition-colors disabled:opacity-50"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Confirm &amp; Send
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Send to Client URL Modal */}
       {sendModalOpen && (

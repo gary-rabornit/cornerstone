@@ -15,6 +15,25 @@ export async function POST(
 
   const { id } = await params
 
+  // Confirmed email comes from the send-confirmation dialog
+  const body = await request.json().catch(() => ({}))
+  const confirmedEmail = typeof body?.clientEmail === 'string' ? body.clientEmail.trim() : ''
+
+  if (!confirmedEmail) {
+    return NextResponse.json(
+      { error: 'Client email is required to send the proposal' },
+      { status: 400 }
+    )
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(confirmedEmail)) {
+    return NextResponse.json(
+      { error: 'Please provide a valid client email address' },
+      { status: 400 }
+    )
+  }
+
   const proposal = await prisma.proposal.findUnique({
     where: { id },
     include: { deal: true },
@@ -27,6 +46,17 @@ export async function POST(
       { error: 'Proposal must be APPROVED before sending' },
       { status: 400 }
     )
+  }
+
+  // Update the deal's contactEmail if the sender corrected it in the confirm dialog
+  if (proposal.dealId && proposal.deal) {
+    const existing = (proposal.deal.contactEmail || '').trim().toLowerCase()
+    if (existing !== confirmedEmail.toLowerCase()) {
+      await prisma.deal.update({
+        where: { id: proposal.dealId },
+        data: { contactEmail: confirmedEmail },
+      })
+    }
   }
 
   const token = uuidv4()
@@ -70,8 +100,8 @@ export async function POST(
     relatedType: 'proposal',
   })
 
-  // Send email to client if we have their email
-  const clientEmail = proposal.deal?.contactEmail
+  // Send email to the confirmed address
+  const clientEmail = confirmedEmail
   const clientName = proposal.deal?.contactName || 'there'
   if (clientEmail) {
     const requester = await prisma.user.findUnique({
