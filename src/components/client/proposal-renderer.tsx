@@ -1,6 +1,8 @@
 import { formatCurrencyDetailed } from '@/lib/utils'
 import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
+import { RabornPricingDisplay } from '@/components/proposals/raborn-pricing-display'
+import type { RabornPricingData } from '@/lib/raborn-pricing'
 import {
   Globe,
   Search,
@@ -137,6 +139,17 @@ export function ProposalRenderer({
   const pricingItems = safeParseArray<PricingItem>(rawPricingItems)
   const pricingTiers = safeParseArray<PricingTier>(rawPricingTiers)
   const services = safeParseArray<ServiceItem>(rawServices)
+
+  let rabornPricing: RabornPricingData | null = null
+  if (pricingMode === 'raborn') {
+    try {
+      const raw = typeof rawPricingTiers === 'string' ? rawPricingTiers : JSON.stringify(rawPricingTiers)
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'mode' in parsed) {
+        rabornPricing = parsed as RabornPricingData
+      }
+    } catch {}
+  }
 
   const coverSection = sections.find((s) => s.type === 'cover')
   const cover = coverSection ? parseCoverContent(coverSection.content) : null
@@ -349,6 +362,26 @@ export function ProposalRenderer({
           <div
             className="prose prose-gray max-w-none text-gray-600 leading-relaxed [&>p]:mb-4 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-gray-900 [&>h3]:mt-6 [&>h3]:mb-2"
             dangerouslySetInnerHTML={{ __html: servicesDetail.content }}
+          />
+        </div>
+      )}
+
+      {/* ===== PRICING: RABORN ===== */}
+      {pricingMode === 'raborn' && rabornPricing && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-12 px-10 py-12">
+          <h2
+            className="text-2xl font-bold mb-8 pl-4"
+            style={{
+              borderLeft: `4px solid ${branding.accentColor}`,
+              color: branding.primaryColor,
+            }}
+          >
+            Pricing
+          </h2>
+          <RabornPricingDisplay
+            data={rabornPricing}
+            accentColor={branding.accentColor}
+            primaryColor={branding.primaryColor}
           />
         </div>
       )}

@@ -6,6 +6,8 @@ import { RichTextEditor } from './rich-text-editor'
 import { PricingTable } from './pricing-table'
 import { ServicesGridEditor, DEFAULT_SERVICES } from './services-grid-editor'
 import { PricingTiersEditor, DEFAULT_PRICING_TIERS } from './pricing-tiers-editor'
+import { RabornPricingEditor } from './raborn-pricing-editor'
+import { DEFAULT_RABORN_PRICING, type RabornPricingData } from '@/lib/raborn-pricing'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
 import {
   FileImage,
@@ -127,8 +129,31 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
 
   const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(() => {
     const parsed = safeParse<PricingTier[]>(proposal.pricingTiers, [])
-    return parsed.length > 0 ? parsed : DEFAULT_PRICING_TIERS
+    // Only use as tiers if it's actually an array of tiers (not Raborn pricing data)
+    if (Array.isArray(parsed) && parsed.length > 0 && 'monthlyCost' in (parsed[0] || {})) {
+      return parsed as PricingTier[]
+    }
+    return DEFAULT_PRICING_TIERS
   })
+
+  // Raborn pricing (Monthly Flex / Project with solution tiers) — stored in pricingTiers JSON when mode === 'raborn'
+  const [rabornPricing, setRabornPricing] = useState<RabornPricingData>(() => {
+    if (proposal.pricingMode === 'raborn') {
+      try {
+        const raw = typeof proposal.pricingTiers === 'string'
+          ? proposal.pricingTiers
+          : JSON.stringify(proposal.pricingTiers)
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && 'mode' in parsed && 'solutions' in parsed) {
+          return parsed as RabornPricingData
+        }
+      } catch {}
+    }
+    return DEFAULT_RABORN_PRICING
+  })
+
+  const isRabornITOrSoftware =
+    proposal.company === 'RABORN_IT' || proposal.company === 'RABORN_SOFTWARE'
 
   const [services, setServices] = useState<ServiceItem[]>(() => {
     const parsed = safeParse<ServiceItem[]>(proposal.services, [])
@@ -172,7 +197,7 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
       updatedSections: ProposalSection[],
       updatedPricingItems: PricingItem[],
       updatedPricingMode: string,
-      updatedPricingTiers: PricingTier[],
+      updatedPricingTiers: PricingTier[] | RabornPricingData,
       updatedServices: ServiceItem[],
       updatedRepName: string,
       updatedRepTitle: string,
@@ -183,7 +208,8 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
         sections: updatedSections,
         pricingItems: updatedPricingItems,
         pricingMode: updatedPricingMode,
-        pricingTiers: updatedPricingTiers,
+        // When mode is 'raborn', pricingTiers holds the RabornPricingData object; otherwise an array
+        pricingTiers: updatedPricingTiers as PricingTier[],
         services: updatedServices,
         repName: updatedRepName,
         repTitle: updatedRepTitle,
@@ -221,12 +247,19 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
 
   function handlePricingModeChange(mode: string) {
     setPricingMode(mode)
-    triggerSave(sections, pricingItems, mode, pricingTiers, services, repName, repTitle, repEmail, repPhone)
+    // Save with the appropriate pricing payload for the new mode
+    const payload = mode === 'raborn' ? rabornPricing : pricingTiers
+    triggerSave(sections, pricingItems, mode, payload, services, repName, repTitle, repEmail, repPhone)
   }
 
   function handleTiersChange(newTiers: PricingTier[]) {
     setPricingTiers(newTiers)
     triggerSave(sections, pricingItems, pricingMode, newTiers, services, repName, repTitle, repEmail, repPhone)
+  }
+
+  function handleRabornPricingChange(next: RabornPricingData) {
+    setRabornPricing(next)
+    triggerSave(sections, pricingItems, pricingMode, next, services, repName, repTitle, repEmail, repPhone)
   }
 
   function handleServicesChange(newServices: ServiceItem[]) {
@@ -479,11 +512,25 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
         {/* ===== PRICING ===== */}
         {activeTab === 'pricing' && (
           <div className="space-y-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <h3 className="text-lg font-semibold text-[#003964]">Pricing</h3>
 
               {/* Mode Toggle */}
-              <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-1">
+              <div className="flex items-center gap-1 rounded-lg border border-gray-200 p-1">
+                {isRabornITOrSoftware && (
+                  <button
+                    type="button"
+                    onClick={() => handlePricingModeChange('raborn')}
+                    className={cn(
+                      'px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+                      pricingMode === 'raborn'
+                        ? 'bg-[#003964] text-white'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    )}
+                  >
+                    Raborn Pricing
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => handlePricingModeChange('line_items')}
@@ -506,13 +553,18 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
                       : 'text-gray-500 hover:bg-gray-100'
                   )}
                 >
-                  Tier Plans
+                  Custom Tiers
                 </button>
               </div>
             </div>
 
             {pricingMode === 'line_items' ? (
               <PricingTable items={pricingItems} onChange={handlePricingChange} />
+            ) : pricingMode === 'raborn' ? (
+              <RabornPricingEditor
+                value={rabornPricing}
+                onChange={handleRabornPricingChange}
+              />
             ) : (
               <PricingTiersEditor tiers={pricingTiers} onChange={handleTiersChange} />
             )}
