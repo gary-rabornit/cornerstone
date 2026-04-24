@@ -92,7 +92,7 @@ export function RabornPricingDisplay({
               </div>
 
               {/* Options */}
-              <div className="p-4 space-y-3 flex-1 flex flex-col">
+              <div className="p-4 space-y-8 flex-1 flex flex-col">
                 {isSelectable && (
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
                     Select an option
