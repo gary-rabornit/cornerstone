@@ -4,29 +4,20 @@ import { Check } from 'lucide-react'
 import { formatCurrencyDetailed } from '@/lib/utils'
 import {
   calculateOptionPricing,
+  deriveSolutionOptions,
   type RabornPricingData,
-  type RabornSolutionOption,
+  type DerivedOption,
 } from '@/lib/raborn-pricing'
 
 interface Props {
   data: RabornPricingData
   accentColor?: string
   primaryColor?: string
-
-  // Optional selection props — only used on the client-facing signing view
   selectedPlanId?: string | null
-  onSelectPlan?: (option: RabornSolutionOption, solutionName: string) => void
-
-  // Read-only display (after signing or in the editor preview)
+  onSelectPlan?: (option: DerivedOption, solutionName: string) => void
   readOnly?: boolean
 }
 
-/**
- * Display of Raborn pricing — used in preview, editor preview, and client signing view.
- *
- * When `onSelectPlan` is provided, each option becomes a selectable radio card.
- * The client must pick exactly one option across all solutions.
- */
 export function RabornPricingDisplay({
   data,
   primaryColor = '#003964',
@@ -54,80 +45,85 @@ export function RabornPricingDisplay({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {solutions.map((sol) => (
-          <div
-            key={sol.tier}
-            className="rounded-xl border-2 bg-white overflow-hidden flex flex-col"
-            style={{
-              borderColor: sol.recommended ? sol.color : '#E5E7EB',
-              boxShadow: sol.recommended ? `0 4px 24px ${sol.color}25` : undefined,
-            }}
-          >
-            {/* Ribbon */}
+        {solutions.map((sol) => {
+          const derived = deriveSolutionOptions(sol, data)
+
+          return (
             <div
-              className="text-xs font-bold text-white text-center uppercase tracking-wider flex items-center justify-center"
+              key={sol.tier}
+              className="rounded-xl border-2 bg-white overflow-hidden flex flex-col"
               style={{
-                backgroundColor: sol.recommended ? sol.color : 'transparent',
-                height: '28px',
+                borderColor: sol.recommended ? sol.color : '#E5E7EB',
+                boxShadow: sol.recommended ? `0 4px 24px ${sol.color}25` : undefined,
               }}
             >
-              {sol.recommended ? '★ Recommended' : ''}
-            </div>
+              {/* Ribbon */}
+              <div
+                className="text-xs font-bold text-white text-center uppercase tracking-wider flex items-center justify-center"
+                style={{
+                  backgroundColor: sol.recommended ? sol.color : 'transparent',
+                  height: '28px',
+                }}
+              >
+                {sol.recommended ? '★ Recommended' : ''}
+              </div>
 
-            {/* Header */}
-            <div
-              className="px-5 text-center flex items-center justify-center"
-              style={{
-                backgroundColor: `${sol.color}10`,
-                height: '64px',
-              }}
-            >
-              <h4 className="text-lg font-bold" style={{ color: sol.color }}>
-                {sol.name}
-              </h4>
-            </div>
+              {/* Header */}
+              <div
+                className="px-5 text-center flex items-center justify-center"
+                style={{
+                  backgroundColor: `${sol.color}10`,
+                  height: '64px',
+                }}
+              >
+                <h4 className="text-lg font-bold" style={{ color: sol.color }}>
+                  {sol.name}
+                </h4>
+              </div>
 
-            {/* Description */}
-            <div
-              className="px-5 border-b border-gray-100 flex items-center justify-center"
-              style={{ height: '120px' }}
-            >
-              <p className="text-sm text-gray-600 text-center leading-relaxed">
-                {sol.description}
-              </p>
-            </div>
+              {/* Description */}
+              <div
+                className="px-5 border-b border-gray-100 flex items-center justify-center"
+                style={{ height: '120px' }}
+              >
+                <p className="text-sm text-gray-600 text-center leading-relaxed">
+                  {sol.description}
+                </p>
+              </div>
 
-            {/* Options */}
-            <div className="p-4 space-y-3 flex-1 flex flex-col">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                {isSelectable ? 'Select an option' : 'Options'}
-              </p>
-              {sol.options.map((option) => {
-                const pricing = calculateOptionPricing(option, mode)
-                const isSelected = selectedPlanId === option.id
+              {/* Options */}
+              <div className="p-4 space-y-3 flex-1 flex flex-col">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                  {isSelectable ? 'Select an option' : 'Options'}
+                </p>
+                {derived.map((option) => {
+                  const pricing = calculateOptionPricing(option, mode)
+                  const isSelected = selectedPlanId === option.id
 
-                return (
-                  <OptionCard
-                    key={option.id}
-                    option={option}
-                    agreementLabel={pricing.agreementLabel}
-                    hoursLabel={pricing.hoursLabel}
-                    monthlyCost={pricing.monthlyCost}
-                    totalCost={pricing.totalCost}
-                    discount={pricing.discount}
-                    savings={pricing.savings}
-                    color={sol.color}
-                    accentBg={sol.accentBg}
-                    accentText={sol.accentText}
-                    isSelectable={isSelectable}
-                    isSelected={isSelected}
-                    onSelect={() => onSelectPlan?.(option, sol.name)}
-                  />
-                )
-              })}
+                  return (
+                    <OptionCard
+                      key={option.id}
+                      option={option}
+                      label={option.label}
+                      agreementLabel={pricing.agreementLabel}
+                      hoursLabel={pricing.hoursLabel}
+                      monthlyCost={pricing.monthlyCost}
+                      totalCost={pricing.totalCost}
+                      discount={pricing.discount}
+                      savings={pricing.savings}
+                      color={sol.color}
+                      accentBg={sol.accentBg}
+                      accentText={sol.accentText}
+                      isSelectable={isSelectable}
+                      isSelected={isSelected}
+                      onSelect={() => onSelectPlan?.(option, sol.name)}
+                    />
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <p className="text-xs text-center text-gray-400 pt-2">
@@ -139,10 +135,11 @@ export function RabornPricingDisplay({
   )
 }
 
-// ── Single option card (within a solution) ───────────────────────
+// ── Single option card ───────────────────────────────────
 
 interface OptionCardProps {
-  option: RabornSolutionOption
+  option: DerivedOption
+  label: string
   agreementLabel: string
   hoursLabel: string
   monthlyCost: number
@@ -158,7 +155,7 @@ interface OptionCardProps {
 }
 
 function OptionCard({
-  option,
+  label,
   agreementLabel,
   hoursLabel,
   monthlyCost,
@@ -190,9 +187,9 @@ function OptionCard({
       }`}
       style={borderStyle}
     >
-      {/* Option label + radio indicator */}
+      {/* Option label + radio */}
       <div className="px-3 py-2 bg-white flex items-center justify-between border-b border-gray-100">
-        <span className="text-xs font-bold" style={{ color }}>{option.label}</span>
+        <span className="text-xs font-bold" style={{ color }}>{label}</span>
         {isSelectable && (
           <span
             className="h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors"
@@ -206,11 +203,8 @@ function OptionCard({
         )}
       </div>
 
-      {/* Pricing details */}
-      <div
-        className="px-3 py-3 text-white text-center"
-        style={{ backgroundColor: color }}
-      >
+      {/* Pricing */}
+      <div className="px-3 py-3 text-white text-center" style={{ backgroundColor: color }}>
         <p className="text-[10px] font-semibold opacity-90 uppercase tracking-wider">
           {agreementLabel}
         </p>
@@ -228,10 +222,7 @@ function OptionCard({
       </div>
 
       {/* Total */}
-      <div
-        className="px-3 py-2 text-center"
-        style={{ backgroundColor: accentBg }}
-      >
+      <div className="px-3 py-2" style={{ backgroundColor: accentBg }}>
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold" style={{ color: accentText }}>Total</span>
           <span className="text-sm font-bold text-gray-900">{formatCurrencyDetailed(totalCost)}</span>

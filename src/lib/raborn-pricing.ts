@@ -93,21 +93,14 @@ export function lookupProject(monthlyHours: number): ProjectRow | null {
 }
 
 // ── Solution tier defaults ─────────────────────────────────────────
-// Each tier has exactly 2 options the client picks from.
-
-export interface RabornSolutionOption {
-  id: string          // stable ID — used by client to select this plan
-  label: string       // e.g., "Option A"
-  hours: number       // for monthly_flex
-  term: MonthlyFlexTerm
-  projectMonthlyHours: number  // for project
-}
+// Global terms drive the 2 options offered within each solution.
 
 export interface RabornSolution {
   tier: SolutionTier
   name: string
   description: string
-  options: RabornSolutionOption[]   // always length 2
+  hours: number              // monthly hours (monthly_flex mode)
+  projectMonthlyHours: number  // monthly hours (project mode)
   recommended: boolean
   color: string
   accentBg: string
@@ -119,40 +112,34 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     tier: 'focused',
     name: 'Focused Solution',
     description: 'Targeted scope addressing your highest-priority needs.',
+    hours: 20,
+    projectMonthlyHours: 15,
     recommended: false,
     color: '#EF4444',
     accentBg: '#FEF2F2',
     accentText: '#B91C1C',
-    options: [
-      { id: 'focused-a', label: 'Option A', hours: 20, term: 6,  projectMonthlyHours: 15 },
-      { id: 'focused-b', label: 'Option B', hours: 25, term: 12, projectMonthlyHours: 20 },
-    ],
   },
   {
     tier: 'recommended',
     name: 'Balanced Solution',
     description: 'Balanced coverage to deliver meaningful results across your key initiatives.',
+    hours: 40,
+    projectMonthlyHours: 25,
     recommended: true,
     color: '#00CFF8',
     accentBg: '#ECFEFF',
     accentText: '#0E7490',
-    options: [
-      { id: 'balanced-a', label: 'Option A', hours: 40, term: 12, projectMonthlyHours: 25 },
-      { id: 'balanced-b', label: 'Option B', hours: 50, term: 24, projectMonthlyHours: 30 },
-    ],
   },
   {
     tier: 'expanded',
     name: 'Expanded Solution',
     description: 'Full-scope engagement with maximum capacity and strategic depth.',
+    hours: 80,
+    projectMonthlyHours: 50,
     recommended: false,
     color: '#10B981',
     accentBg: '#F0FDF4',
     accentText: '#15803D',
-    options: [
-      { id: 'expanded-a', label: 'Option A', hours: 80,  term: 12, projectMonthlyHours: 50 },
-      { id: 'expanded-b', label: 'Option B', hours: 100, term: 24, projectMonthlyHours: 60 },
-    ],
   },
 ]
 
@@ -160,15 +147,64 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
 
 export interface RabornPricingData {
   mode: PricingMode
+  terms: [MonthlyFlexTerm, MonthlyFlexTerm]      // 2 commitment terms offered to the client (monthly_flex)
+  projectHours: [number, number]                 // 2 monthly-hours options offered to the client (project)
   solutions: RabornSolution[]
 }
 
 export const DEFAULT_RABORN_PRICING: RabornPricingData = {
   mode: 'monthly_flex',
+  terms: [6, 12],
+  projectHours: [25, 50],
   solutions: DEFAULT_SOLUTIONS,
 }
 
-// ── Migration helper for legacy single-option format ───────────────
+// ── Derived option helper ────────────────────────────────────────
+// At render time, each solution offers 2 selectable plans derived from the
+// global terms (monthly_flex) or projectHours (project).
+
+export interface DerivedOption {
+  id: string              // unique — tier + index
+  label: string           // e.g., "6 Months" or "25 hrs/mo"
+  hours: number
+  term: MonthlyFlexTerm
+  projectMonthlyHours: number
+}
+
+export function deriveSolutionOptions(
+  solution: RabornSolution,
+  data: Pick<RabornPricingData, 'mode' | 'terms' | 'projectHours'>
+): DerivedOption[] {
+  if (data.mode === 'monthly_flex') {
+    return data.terms.map((term, i) => ({
+      id: `${solution.tier}-${i}`,
+      label: `${term} Months`,
+      hours: solution.hours,
+      term,
+      projectMonthlyHours: solution.projectMonthlyHours,
+    }))
+  } else {
+    return data.projectHours.map((phours, i) => ({
+      id: `${solution.tier}-${i}`,
+      label: `${phours} hrs/mo`,
+      hours: solution.hours,
+      term: data.terms[0],  // unused in project mode
+      projectMonthlyHours: phours,
+    }))
+  }
+}
+
+// ── Migration helper for legacy formats ────────────────────────────
+// Supports two legacy shapes:
+//   v1: solution has top-level { hours, term, projectMonthlyHours }
+//   v2: solution has { options: [{hours, term, projectMonthlyHours}, ...] }
+// New shape (v3): global terms + projectHours + solutions with simple hours
+
+interface LegacyOptionLike {
+  hours?: number
+  term?: MonthlyFlexTerm
+  projectMonthlyHours?: number
+}
 
 interface LegacySolution {
   tier?: SolutionTier
@@ -177,27 +213,25 @@ interface LegacySolution {
   hours?: number
   term?: MonthlyFlexTerm
   projectMonthlyHours?: number
-  options?: RabornSolutionOption[]
+  options?: LegacyOptionLike[]
   recommended?: boolean
   color?: string
   accentBg?: string
   accentText?: string
 }
 
-/**
- * Migrates a solution object to the new 2-option format. If the solution already has
- * an `options` array, returns it as-is. Otherwise, builds `options` from legacy fields.
- */
-export function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
+function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
   const defaults = DEFAULT_SOLUTIONS[idx] ?? DEFAULT_SOLUTIONS[0]
 
-  // Already migrated
-  if (Array.isArray(raw.options) && raw.options.length >= 2) {
+  // If v2 (options array), pick the first option's hours as the solution's hours
+  if (Array.isArray(raw.options) && raw.options.length > 0) {
+    const first = raw.options[0]
     return {
       tier: raw.tier ?? defaults.tier,
       name: raw.name ?? defaults.name,
       description: raw.description ?? defaults.description,
-      options: raw.options.slice(0, 2) as RabornSolutionOption[],
+      hours: first.hours ?? defaults.hours,
+      projectMonthlyHours: first.projectMonthlyHours ?? defaults.projectMonthlyHours,
       recommended: raw.recommended ?? defaults.recommended,
       color: raw.color ?? defaults.color,
       accentBg: raw.accentBg ?? defaults.accentBg,
@@ -205,28 +239,13 @@ export function migrateSolution(raw: LegacySolution, idx: number): RabornSolutio
     }
   }
 
-  // Legacy format → build 2 options, first from the saved values, second from defaults
-  const tier = raw.tier ?? defaults.tier
-  const firstOption: RabornSolutionOption = {
-    id: `${tier}-a`,
-    label: 'Option A',
-    hours: raw.hours ?? defaults.options[0].hours,
-    term: raw.term ?? defaults.options[0].term,
-    projectMonthlyHours: raw.projectMonthlyHours ?? defaults.options[0].projectMonthlyHours,
-  }
-  const secondOption: RabornSolutionOption = {
-    id: `${tier}-b`,
-    label: 'Option B',
-    hours: defaults.options[1].hours,
-    term: defaults.options[1].term,
-    projectMonthlyHours: defaults.options[1].projectMonthlyHours,
-  }
-
+  // v1 (or new shape already): use top-level hours
   return {
-    tier,
+    tier: raw.tier ?? defaults.tier,
     name: raw.name ?? defaults.name,
     description: raw.description ?? defaults.description,
-    options: [firstOption, secondOption],
+    hours: raw.hours ?? defaults.hours,
+    projectMonthlyHours: raw.projectMonthlyHours ?? defaults.projectMonthlyHours,
     recommended: raw.recommended ?? defaults.recommended,
     color: raw.color ?? defaults.color,
     accentBg: raw.accentBg ?? defaults.accentBg,
@@ -235,16 +254,44 @@ export function migrateSolution(raw: LegacySolution, idx: number): RabornSolutio
 }
 
 /**
- * Migrates a full RabornPricingData blob. Safe to call on both old and new data.
+ * Migrates a full RabornPricingData blob. Safe to call on old (v1/v2) and new (v3) data.
+ * Also infers `terms` and `projectHours` from legacy option arrays when present.
  */
 export function migrateRabornPricing(raw: unknown): RabornPricingData {
   if (!raw || typeof raw !== 'object') return DEFAULT_RABORN_PRICING
-  const obj = raw as { mode?: PricingMode; solutions?: LegacySolution[] }
+  const obj = raw as {
+    mode?: PricingMode
+    terms?: [MonthlyFlexTerm, MonthlyFlexTerm]
+    projectHours?: [number, number]
+    solutions?: LegacySolution[]
+  }
   const mode: PricingMode = obj.mode === 'project' ? 'project' : 'monthly_flex'
+
+  // Infer global terms from legacy v2 option arrays if present
+  let terms: [MonthlyFlexTerm, MonthlyFlexTerm] = Array.isArray(obj.terms) && obj.terms.length === 2
+    ? obj.terms
+    : [...DEFAULT_RABORN_PRICING.terms]
+  let projectHours: [number, number] = Array.isArray(obj.projectHours) && obj.projectHours.length === 2
+    ? obj.projectHours
+    : [...DEFAULT_RABORN_PRICING.projectHours]
+
+  if (obj.solutions && obj.solutions.length > 0) {
+    const firstWithOptions = obj.solutions.find(s => Array.isArray(s.options) && s.options.length >= 2)
+    if (firstWithOptions?.options && firstWithOptions.options.length >= 2) {
+      const termA = firstWithOptions.options[0].term
+      const termB = firstWithOptions.options[1].term
+      if (termA && termB) terms = [termA, termB]
+      const phA = firstWithOptions.options[0].projectMonthlyHours
+      const phB = firstWithOptions.options[1].projectMonthlyHours
+      if (typeof phA === 'number' && typeof phB === 'number') projectHours = [phA, phB]
+    }
+  }
+
   const solutions = Array.isArray(obj.solutions) && obj.solutions.length > 0
     ? obj.solutions.map((s, i) => migrateSolution(s, i))
     : DEFAULT_SOLUTIONS
-  return { mode, solutions }
+
+  return { mode, terms, projectHours, solutions }
 }
 
 // ── Pricing calculation helpers ──────────────────────────────────
@@ -259,7 +306,7 @@ export interface OptionPricing {
 }
 
 export function calculateOptionPricing(
-  option: RabornSolutionOption,
+  option: DerivedOption,
   mode: PricingMode
 ): OptionPricing {
   if (mode === 'monthly_flex') {
