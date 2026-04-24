@@ -115,9 +115,9 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     hours: 20,
     projectMonthlyHours: 15,
     recommended: false,
-    color: '#EF4444',
-    accentBg: '#FEF2F2',
-    accentText: '#B91C1C',
+    color: '#F97316',
+    accentBg: '#FFF7ED',
+    accentText: '#C2410C',
   },
   {
     tier: 'recommended',
