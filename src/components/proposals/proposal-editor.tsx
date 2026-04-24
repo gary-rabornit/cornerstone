@@ -327,31 +327,61 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
 
             {/* Rep Info */}
             <div className="border-t border-gray-200 pt-5 mt-5">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h4 className="text-sm font-semibold text-[#003964]">
-                  Representative Information
-                </h4>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-gray-500">Quick fill:</label>
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      const preset = REP_PRESETS[e.target.value as keyof typeof REP_PRESETS]
-                      if (!preset) return
-                      setRepName(preset.name)
-                      setRepTitle(preset.title)
-                      setRepEmail(preset.email)
-                      setRepPhone(preset.phone)
-                      triggerSave(sections, pricingItems, pricingMode, pricingTiers, services, preset.name, preset.title, preset.email, preset.phone)
-                    }}
-                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none"
-                  >
-                    <option value="">Select a rep…</option>
-                    <option value="gary">Gary Billington</option>
-                    <option value="ryan">Ryan Deshler</option>
-                  </select>
+              <h4 className="text-sm font-semibold text-[#003964] mb-3">
+                Representative Information
+              </h4>
+
+              {/* Quick-fill rep buttons */}
+              <div className="mb-5 rounded-lg border border-[#00CFF8]/30 bg-[#00CFF8]/5 p-4">
+                <p className="text-xs font-semibold text-[#003964] uppercase tracking-wide mb-3">
+                  Quick Fill — select a rep to auto-populate
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {Object.entries(REP_PRESETS).map(([key, preset]) => {
+                    const isSelected =
+                      repName === preset.name &&
+                      repTitle === preset.title &&
+                      repEmail.toLowerCase() === preset.email.toLowerCase() &&
+                      repPhone === preset.phone
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setRepName(preset.name)
+                          setRepTitle(preset.title)
+                          setRepEmail(preset.email)
+                          setRepPhone(preset.phone)
+                          triggerSave(sections, pricingItems, pricingMode, pricingTiers, services, preset.name, preset.title, preset.email, preset.phone)
+                        }}
+                        className={cn(
+                          'flex items-start gap-3 rounded-lg border-2 bg-white p-3 text-left transition-all',
+                          isSelected
+                            ? 'border-[#00CFF8] shadow-sm shadow-[#00CFF8]/10'
+                            : 'border-gray-200 hover:border-[#00CFF8]/50 hover:bg-[#00CFF8]/5'
+                        )}
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#003964]/10 text-sm font-bold text-[#003964]">
+                          {preset.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#1A202C] truncate">
+                            {preset.name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{preset.title}</p>
+                        </div>
+                        {isSelected && (
+                          <span className="text-xs font-bold text-[#00CFF8]">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Or type custom rep info below.
+                </p>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
