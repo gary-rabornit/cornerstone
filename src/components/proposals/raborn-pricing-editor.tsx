@@ -99,51 +99,71 @@ export function RabornPricingEditor({ value, onChange }: Props) {
 
         {mode === 'monthly_flex' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[0, 1].map((idx) => (
-              <div key={idx} className="rounded-lg bg-white border border-gray-200 p-3">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                  Option {idx === 0 ? 'A' : 'B'}
-                </label>
-                <div className="grid grid-cols-4 gap-1">
-                  {MONTHLY_FLEX_TERMS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => updateTerm(idx as 0 | 1, t)}
-                      className={cn(
-                        'py-2 rounded-md text-xs font-semibold transition-colors',
-                        terms[idx] === t
-                          ? 'bg-[#003964] text-white shadow-sm'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      )}
-                    >
-                      {t}mo
-                    </button>
-                  ))}
+            {[0, 1].map((idx) => {
+              const otherIdx = idx === 0 ? 1 : 0
+              const otherTerm = terms[otherIdx]
+              return (
+                <div key={idx} className="rounded-lg bg-white border border-gray-200 p-3">
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Option {idx === 0 ? 'A' : 'B'}
+                  </label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {MONTHLY_FLEX_TERMS.map((t) => {
+                      const isSelected = terms[idx] === t
+                      const isTakenByOther = t === otherTerm && !isSelected
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          disabled={isTakenByOther}
+                          onClick={() => !isTakenByOther && updateTerm(idx as 0 | 1, t)}
+                          className={cn(
+                            'py-2 rounded-md text-xs font-semibold transition-colors',
+                            isSelected
+                              ? 'bg-[#003964] text-white shadow-sm'
+                              : isTakenByOther
+                                ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          )}
+                        >
+                          {t}mo
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[0, 1].map((idx) => (
-              <div key={idx} className="rounded-lg bg-white border border-gray-200 p-3">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                  Option {idx === 0 ? 'A' : 'B'}
-                </label>
-                <select
-                  value={projectHours[idx]}
-                  onChange={(e) => updateProjectHour(idx as 0 | 1, parseFloat(e.target.value))}
-                  className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-1 focus:ring-[#00CFF8]/20 focus:outline-none"
-                >
-                  {PROJECT_ROWS.map((r) => (
-                    <option key={r.monthlyHours} value={r.monthlyHours}>
-                      {r.monthlyHours} hrs/mo · {r.totalHours} total
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
+            {[0, 1].map((idx) => {
+              const otherIdx = idx === 0 ? 1 : 0
+              const otherHours = projectHours[otherIdx]
+              return (
+                <div key={idx} className="rounded-lg bg-white border border-gray-200 p-3">
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Option {idx === 0 ? 'A' : 'B'}
+                  </label>
+                  <select
+                    value={projectHours[idx]}
+                    onChange={(e) => updateProjectHour(idx as 0 | 1, parseFloat(e.target.value))}
+                    className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-1 focus:ring-[#00CFF8]/20 focus:outline-none"
+                  >
+                    {PROJECT_ROWS.map((r) => (
+                      <option
+                        key={r.monthlyHours}
+                        value={r.monthlyHours}
+                        disabled={r.monthlyHours === otherHours}
+                      >
+                        {r.monthlyHours} hrs/mo · {r.totalHours} total
+                        {r.monthlyHours === otherHours ? ' (used in other option)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
