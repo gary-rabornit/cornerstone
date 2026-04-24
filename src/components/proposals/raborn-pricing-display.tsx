@@ -93,9 +93,11 @@ export function RabornPricingDisplay({
 
               {/* Options */}
               <div className="p-4 space-y-3 flex-1 flex flex-col">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                  {isSelectable ? 'Select an option' : 'Options'}
-                </p>
+                {isSelectable && (
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                    Select an option
+                  </p>
+                )}
                 {derived.map((option) => {
                   const pricing = calculateOptionPricing(option, mode)
                   const isSelected = selectedPlanId === option.id
@@ -187,15 +189,15 @@ function OptionCard({
       }`}
       style={borderStyle}
     >
-      {/* Option label + radio — fixed 36px */}
+      {/* Option label + radio — fixed 48px */}
       <div
-        className="px-3 flex items-center justify-between border-b border-gray-100 bg-white"
-        style={{ height: '36px' }}
+        className="relative px-3 flex items-center justify-center border-b border-gray-100 bg-white"
+        style={{ height: '48px' }}
       >
-        <span className="text-xs font-bold" style={{ color }}>{label}</span>
+        <span className="text-lg font-bold" style={{ color }}>{label}</span>
         {isSelectable && (
           <span
-            className="h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors"
+            className="absolute right-3 h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors"
             style={{
               borderColor: isSelected ? color : '#D1D5DB',
               backgroundColor: isSelected ? color : 'transparent',
