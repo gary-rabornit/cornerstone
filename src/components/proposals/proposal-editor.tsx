@@ -17,6 +17,22 @@ import {
   PenLine,
 } from 'lucide-react'
 
+// Quick-select presets for common reps
+const REP_PRESETS = {
+  gary: {
+    name: 'Gary Billington',
+    title: 'Vice President of Growth Initiatives',
+    email: 'Gary@RabornMedia.com',
+    phone: '704-255-5168',
+  },
+  ryan: {
+    name: 'Ryan Deshler',
+    title: 'Director of Business Development // Senior Designer & Developer',
+    email: 'Ryan@RabornMedia.com',
+    phone: '657-514-0868',
+  },
+} as const
+
 interface ProposalData {
   id: string
   title: string
@@ -311,9 +327,31 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
 
             {/* Rep Info */}
             <div className="border-t border-gray-200 pt-5 mt-5">
-              <h4 className="text-sm font-semibold text-[#003964] mb-4">
-                Representative Information
-              </h4>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                <h4 className="text-sm font-semibold text-[#003964]">
+                  Representative Information
+                </h4>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-500">Quick fill:</label>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const preset = REP_PRESETS[e.target.value as keyof typeof REP_PRESETS]
+                      if (!preset) return
+                      setRepName(preset.name)
+                      setRepTitle(preset.title)
+                      setRepEmail(preset.email)
+                      setRepPhone(preset.phone)
+                      triggerSave(sections, pricingItems, pricingMode, pricingTiers, services, preset.name, preset.title, preset.email, preset.phone)
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none"
+                  >
+                    <option value="">Select a rep…</option>
+                    <option value="gary">Gary Billington</option>
+                    <option value="ryan">Ryan Deshler</option>
+                  </select>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
