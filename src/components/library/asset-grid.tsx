@@ -219,6 +219,14 @@ export function AssetGrid({ assets, viewMode, onDelete }: AssetGridProps) {
                     ;(e.target as HTMLImageElement).parentElement!.classList.add('fallback-icon')
                   }}
                 />
+              ) : asset.type === 'DOCUMENT' && asset.filePath && asset.mimeType === 'application/pdf' ? (
+                <div className="relative h-full w-full pointer-events-none bg-white">
+                  <iframe
+                    src={`${asset.filePath}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                    className="h-full w-full border-0"
+                    title={asset.name}
+                  />
+                </div>
               ) : asset.type === 'TEXT_BLOCK' ? (
                 <div className="px-4 py-3 w-full">
                   <p className="text-xs text-gray-500 line-clamp-5 leading-relaxed">
@@ -285,8 +293,10 @@ export function AssetGrid({ assets, viewMode, onDelete }: AssetGridProps) {
 function PreviewModal({ asset, onClose }: { asset: Asset | null; onClose: () => void }) {
   if (!asset) return null
 
+  const isPdf = asset.mimeType === 'application/pdf'
+
   return (
-    <Modal isOpen={!!asset} onClose={onClose} title={asset.name} size="lg">
+    <Modal isOpen={!!asset} onClose={onClose} title={asset.name} size="xl">
       <div className="space-y-4">
         {/* Preview content */}
         {asset.type === 'IMAGE' && asset.filePath && (
@@ -294,21 +304,48 @@ function PreviewModal({ asset, onClose }: { asset: Asset | null; onClose: () => 
             <img
               src={asset.filePath}
               alt={asset.name}
-              className="max-w-full max-h-[400px] object-contain"
+              className="max-w-full max-h-[70vh] object-contain"
             />
           </div>
         )}
-        {asset.type === 'DOCUMENT' && (
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <FileText className="h-10 w-10 text-orange-500" />
-            <div>
-              <p className="font-medium text-gray-900">{asset.name}</p>
-              <p className="text-sm text-gray-500">{formatFileSize(asset.fileSize)}</p>
+        {asset.type === 'DOCUMENT' && asset.filePath && isPdf && (
+          <div className="rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+            <iframe
+              src={`${asset.filePath}#toolbar=1&navpanes=0&view=FitH`}
+              className="w-full border-0"
+              style={{ height: '70vh', minHeight: '500px' }}
+              title={asset.name}
+            />
+            <div className="px-4 py-2 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+              <span>{formatFileSize(asset.fileSize)}</span>
+              <a
+                href={asset.filePath}
+                download
+                className="text-[#00CFF8] hover:underline font-medium"
+              >
+                Download original
+              </a>
             </div>
           </div>
         )}
+        {asset.type === 'DOCUMENT' && asset.filePath && !isPdf && (
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+            <FileText className="h-10 w-10 text-orange-500" />
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">{asset.name}</p>
+              <p className="text-sm text-gray-500">{formatFileSize(asset.fileSize)}</p>
+            </div>
+            <a
+              href={asset.filePath}
+              download
+              className="text-sm text-[#00CFF8] hover:underline font-medium"
+            >
+              Download
+            </a>
+          </div>
+        )}
         {asset.type === 'TEXT_BLOCK' && (
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-gray-50 rounded-lg max-h-[70vh] overflow-y-auto">
             <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
               {asset.content || 'No content'}
             </p>
