@@ -115,9 +115,9 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     hours: 0,
     projectMonthlyHours: 0,
     recommended: false,
-    color: '#F97316',
-    accentBg: '#FFF7ED',
-    accentText: '#C2410C',
+    color: '#FB8C00',
+    accentBg: '#FFF4E5',
+    accentText: '#B45309',
   },
   {
     tier: 'recommended',
@@ -230,6 +230,13 @@ interface LegacySolution {
 function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
   const defaults = DEFAULT_SOLUTIONS[idx] ?? DEFAULT_SOLUTIONS[0]
 
+  // Colors are brand-driven — always use current defaults, never stored values
+  const colorFields = {
+    color: defaults.color,
+    accentBg: defaults.accentBg,
+    accentText: defaults.accentText,
+  }
+
   // If v2 (options array), pick the first option's hours as the solution's hours
   if (Array.isArray(raw.options) && raw.options.length > 0) {
     const first = raw.options[0]
@@ -240,9 +247,7 @@ function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
       hours: first.hours ?? defaults.hours,
       projectMonthlyHours: first.projectMonthlyHours ?? defaults.projectMonthlyHours,
       recommended: raw.recommended ?? defaults.recommended,
-      color: raw.color ?? defaults.color,
-      accentBg: raw.accentBg ?? defaults.accentBg,
-      accentText: raw.accentText ?? defaults.accentText,
+      ...colorFields,
     }
   }
 
@@ -254,9 +259,7 @@ function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
     hours: raw.hours ?? defaults.hours,
     projectMonthlyHours: raw.projectMonthlyHours ?? defaults.projectMonthlyHours,
     recommended: raw.recommended ?? defaults.recommended,
-    color: raw.color ?? defaults.color,
-    accentBg: raw.accentBg ?? defaults.accentBg,
-    accentText: raw.accentText ?? defaults.accentText,
+    ...colorFields,
   }
 }
 
