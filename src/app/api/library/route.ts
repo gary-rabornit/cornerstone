@@ -60,12 +60,17 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     await writeFile(filePath, Buffer.from(bytes))
 
+    // Convert comma-separated tags to a JSON array
+    const tagsArray = tags
+      ? tags.split(',').map(t => t.trim()).filter(Boolean)
+      : []
+
     const asset = await prisma.contentAsset.create({
       data: {
         name,
         type,
         category: category || null,
-        tags: tags || '[]',
+        tags: JSON.stringify(tagsArray),
         filePath: `/uploads/${uniqueName}`,
         fileSize: file.size,
         mimeType: file.type,
@@ -82,12 +87,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Accept tags as array or comma-separated string, always store as JSON array string
+    let tagsJson = '[]'
+    if (Array.isArray(tags)) {
+      tagsJson = JSON.stringify(tags.map((t: string) => String(t).trim()).filter(Boolean))
+    } else if (typeof tags === 'string' && tags.trim()) {
+      const arr = tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+      tagsJson = JSON.stringify(arr)
+    }
+
     const asset = await prisma.contentAsset.create({
       data: {
         name,
         type,
         category: category || null,
-        tags: tags ? JSON.stringify(tags) : '[]',
+        tags: tagsJson,
         content: content || null,
         uploadedById: session.user.id!,
       },
