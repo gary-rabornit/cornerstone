@@ -25,7 +25,7 @@ export const DEFAULT_PRICING_TIERS: PricingTier[] = [
   },
   {
     id: 'tier-recommended',
-    name: 'Recommended Solution',
+    name: 'Balanced Solution',
     description: '',
     hours: 80,
     monthlyCost: 9000,
