@@ -229,11 +229,11 @@ function OptionCard({
       >
         {discount > 0 ? (
           <>
-            <p className="text-lg font-extrabold leading-none tracking-tight">
+            <p className="text-sm font-extrabold leading-none tracking-tight">
               {(discount * 100).toFixed(0)}% DISCOUNT
             </p>
             {savings > 0 && (
-              <p className="text-[10px] font-semibold mt-0.5 opacity-95">
+              <p className="text-[10px] font-semibold mt-1 opacity-95">
                 Save {formatCurrencyDetailed(savings)}
               </p>
             )}
