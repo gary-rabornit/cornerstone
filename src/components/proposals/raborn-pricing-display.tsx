@@ -60,18 +60,17 @@ export function RabornPricingDisplay({
                 boxShadow: sol.recommended ? `0 4px 24px ${sol.color}25` : undefined,
               }}
             >
-              {sol.recommended && (
-                <div
-                  className="text-xs font-bold text-white text-center py-1.5 uppercase tracking-wider"
-                  style={{ backgroundColor: sol.color }}
-                >
-                  ★ Recommended
-                </div>
-              )}
-
-              {/* Header with tier name */}
+              {/* Ribbon row (always rendered for alignment) */}
               <div
-                className="px-5 py-4 text-center"
+                className="text-xs font-bold text-white text-center py-1.5 uppercase tracking-wider"
+                style={{ backgroundColor: sol.recommended ? sol.color : 'transparent' }}
+              >
+                {sol.recommended ? '★ Recommended' : '\u00A0'}
+              </div>
+
+              {/* Header with tier name — fixed height */}
+              <div
+                className="px-5 py-4 text-center flex items-center justify-center h-[70px]"
                 style={{ backgroundColor: `${sol.color}10` }}
               >
                 <h4 className="text-lg font-bold" style={{ color: sol.color }}>
@@ -79,16 +78,16 @@ export function RabornPricingDisplay({
                 </h4>
               </div>
 
-              {/* Description */}
-              <div className="px-5 py-4 border-b border-gray-100">
-                <p className="text-sm text-gray-600 text-center leading-relaxed min-h-[3em]">
+              {/* Description — fixed height so all cards match */}
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-center h-[120px]">
+                <p className="text-sm text-gray-600 text-center leading-relaxed">
                   {sol.description}
                 </p>
               </div>
 
-              {/* Engagement details */}
+              {/* Engagement details — fixed height */}
               <div
-                className="px-5 py-4 text-white text-center"
+                className="px-5 py-5 text-white text-center flex flex-col justify-center h-[180px]"
                 style={{ backgroundColor: sol.color }}
               >
                 <p className="text-xs font-semibold opacity-90 uppercase tracking-wider">
@@ -105,16 +104,15 @@ export function RabornPricingDisplay({
                   {formatCurrencyDetailed(monthlyCost)}
                   <span className="text-base font-normal opacity-80">/mo</span>
                 </p>
-                {discount > 0 && (
-                  <p className="text-xs mt-1 opacity-90">
-                    {(discount * 100).toFixed(0)}% Discount
-                    {savings > 0 && ` · ${formatCurrencyDetailed(savings)} Savings`}
-                  </p>
-                )}
+                <p className="text-xs mt-1 opacity-90 h-4">
+                  {discount > 0
+                    ? `${(discount * 100).toFixed(0)}% Discount${savings > 0 ? ` · ${formatCurrencyDetailed(savings)} Savings` : ''}`
+                    : '\u00A0'}
+                </p>
               </div>
 
-              {/* Total Cost */}
-              <div className="px-5 py-5 bg-gray-50 text-center mt-auto">
+              {/* Total Cost — fixed height */}
+              <div className="px-5 py-5 bg-gray-50 text-center mt-auto h-[90px] flex flex-col justify-center">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Cost</p>
                 <p className="text-2xl font-bold mt-1" style={{ color: primaryColor }}>
                   {formatCurrencyDetailed(totalCost)}
