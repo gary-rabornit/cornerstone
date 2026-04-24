@@ -106,9 +106,13 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
     setUploading(true)
     setUploadProgress(0)
 
+    // Detect asset type based on mime type
+    const assetType = ACCEPTED_IMAGE_TYPES.includes(selectedFile.type) ? 'IMAGE' : 'DOCUMENT'
+
     const formData = new FormData()
     formData.append('file', selectedFile)
     formData.append('name', name.trim())
+    formData.append('type', assetType)
     if (category.trim()) formData.append('category', category.trim())
     if (tags.trim()) formData.append('tags', tags.trim())
 
