@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Shield, CheckCircle, Eye, FileCheck,
   AlertCircle, Globe, Clock, User, Mail, Phone, Hash, Fingerprint,
-  Download, FileText,
+  Download, FileText, Package,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { getCompanyBranding } from '@/lib/companies'
@@ -23,6 +23,7 @@ const EVENT_INFO: Record<string, { label: string; icon: typeof Eye; color: strin
   CONSENT_GIVEN: { label: 'E-Signature Consent Given', icon: Shield, color: 'text-amber-600 bg-amber-50 border-amber-200' },
   SIGNATURE_CAPTURED: { label: 'Signature Captured', icon: CheckCircle, color: 'text-green-600 bg-green-50 border-green-200' },
   DOCUMENT_SNAPSHOT_CREATED: { label: 'Document Snapshot Created', icon: FileCheck, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+  PLAN_SELECTED: { label: 'Pricing Plan Selected', icon: Package, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
   PROPOSAL_DECLINED: { label: 'Proposal Declined', icon: AlertCircle, color: 'text-red-600 bg-red-50 border-red-200' },
 }
 
@@ -129,6 +130,17 @@ export default async function AuditTrailPage({
             <Field icon={Shield} label="Reference ID" value={access.id.slice(0, 12).toUpperCase()} mono />
             {access.consentedAt && (
               <Field icon={Shield} label="Consent Given At" value={new Date(access.consentedAt).toLocaleString()} />
+            )}
+            {access.selectedPlanLabel && (
+              <div className="sm:col-span-2">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  Selected Plan
+                </p>
+                <p className="mt-1 text-sm font-bold text-cyan-700">
+                  {access.selectedPlanLabel}
+                </p>
+              </div>
             )}
           </div>
 

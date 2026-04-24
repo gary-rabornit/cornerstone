@@ -124,6 +124,8 @@ model ClientAccess {
   signedByEmail  String?
   signedByTitle  String?
   signedByPhone  String?
+  selectedPlanId   String?
+  selectedPlanLabel String?
   status         String    @default("PENDING")
 
   // E-signature compliance

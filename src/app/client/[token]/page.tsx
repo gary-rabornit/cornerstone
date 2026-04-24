@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { ProposalRenderer } from '@/components/client/proposal-renderer'
-import { SignatureSection } from '@/components/client/signature-section'
+import { ClientSigningShell } from '@/components/client/client-signing-shell'
 import { CheckCircle, Clock, XCircle, Download } from 'lucide-react'
 import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
@@ -186,16 +186,14 @@ export default async function ClientProposalPage({ params }: Props) {
   const rabornCompanyName = getCompanyBranding(proposal.company).name
 
   return (
-    <div>
-      <ProposalRenderer {...rendererProps} />
-      <SignatureSection
-        token={token}
-        proposalTitle={proposal.title}
-        proposalVersion={proposal.version}
-        clientCompanyName={proposal.deal?.companyName || undefined}
-        dealValue={proposal.deal?.value || undefined}
-        rabornCompany={rabornCompanyName}
-      />
-    </div>
+    <ClientSigningShell
+      token={token}
+      proposalTitle={proposal.title}
+      proposalVersion={proposal.version}
+      clientCompanyName={proposal.deal?.companyName || undefined}
+      dealValue={proposal.deal?.value || undefined}
+      rabornCompany={rabornCompanyName}
+      rendererProps={rendererProps}
+    />
   )
 }

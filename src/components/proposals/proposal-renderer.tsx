@@ -2,7 +2,7 @@ import { formatCurrencyDetailed } from '@/lib/utils'
 import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
 import { RabornPricingDisplay } from './raborn-pricing-display'
-import type { RabornPricingData } from '@/lib/raborn-pricing'
+import { migrateRabornPricing, type RabornPricingData } from '@/lib/raborn-pricing'
 import {
   Globe,
   Search,
@@ -143,7 +143,7 @@ export function ProposalRenderer({
       const raw = typeof rawPricingTiers === 'string' ? rawPricingTiers : JSON.stringify(rawPricingTiers)
       const parsed = JSON.parse(raw)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'mode' in parsed) {
-        rabornPricing = parsed as RabornPricingData
+        rabornPricing = migrateRabornPricing(parsed)
       }
     } catch {}
   }

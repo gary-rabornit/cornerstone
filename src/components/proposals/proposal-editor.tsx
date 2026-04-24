@@ -7,7 +7,7 @@ import { PricingTable } from './pricing-table'
 import { ServicesGridEditor, DEFAULT_SERVICES } from './services-grid-editor'
 import { PricingTiersEditor, DEFAULT_PRICING_TIERS } from './pricing-tiers-editor'
 import { RabornPricingEditor } from './raborn-pricing-editor'
-import { DEFAULT_RABORN_PRICING, type RabornPricingData } from '@/lib/raborn-pricing'
+import { DEFAULT_RABORN_PRICING, migrateRabornPricing, type RabornPricingData } from '@/lib/raborn-pricing'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
 import {
   FileImage,
@@ -144,9 +144,7 @@ export function ProposalEditor({ proposal, onSave }: ProposalEditorProps) {
           ? proposal.pricingTiers
           : JSON.stringify(proposal.pricingTiers)
         const parsed = JSON.parse(raw)
-        if (parsed && typeof parsed === 'object' && 'mode' in parsed && 'solutions' in parsed) {
-          return parsed as RabornPricingData
-        }
+        return migrateRabornPricing(parsed)
       } catch {}
     }
     return DEFAULT_RABORN_PRICING

@@ -37,6 +37,9 @@ export async function POST(
     signatureImage,
     signatureMode,
     consentedToElectronicSig,
+    selectedPlanId,
+    selectedPlanLabel,
+    selectedSolutionName,
     status,
   } = body
 
@@ -134,6 +137,19 @@ export async function POST(
       ipAddress,
       userAgent,
     })
+    if (selectedPlanId) {
+      newEvents.push({
+        timestamp: signedAt.toISOString(),
+        event: 'PLAN_SELECTED',
+        details: {
+          selectedPlanId,
+          selectedPlanLabel,
+          selectedSolutionName,
+        },
+        ipAddress,
+        userAgent,
+      })
+    }
     newEvents.push({
       timestamp: signedAt.toISOString(),
       event: 'SIGNATURE_CAPTURED',
@@ -145,6 +161,9 @@ export async function POST(
         signatureMode: signatureMode || 'unknown',
         documentVersion: proposal.version,
         documentHash,
+        selectedPlanId: selectedPlanId || null,
+        selectedPlanLabel: selectedPlanLabel || null,
+        selectedSolutionName: selectedSolutionName || null,
       },
       ipAddress,
       userAgent,
@@ -186,6 +205,10 @@ export async function POST(
       signatureImage: signatureImage || null,
       signatureMode: signatureMode || null,
       signedAt,
+      selectedPlanId: selectedPlanId || null,
+      selectedPlanLabel: selectedPlanLabel && selectedSolutionName
+        ? `${selectedSolutionName} · ${selectedPlanLabel}`
+        : selectedPlanLabel || null,
       ...(status === 'SIGNED' && {
         consentedToElectronicSig: true,
         consentedAt: signedAt,

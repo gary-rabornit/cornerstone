@@ -93,17 +93,21 @@ export function lookupProject(monthlyHours: number): ProjectRow | null {
 }
 
 // ── Solution tier defaults ─────────────────────────────────────────
-// Each tier comes with sensible defaults the rep can tweak.
+// Each tier has exactly 2 options the client picks from.
+
+export interface RabornSolutionOption {
+  id: string          // stable ID — used by client to select this plan
+  label: string       // e.g., "Option A"
+  hours: number       // for monthly_flex
+  term: MonthlyFlexTerm
+  projectMonthlyHours: number  // for project
+}
 
 export interface RabornSolution {
   tier: SolutionTier
   name: string
   description: string
-  // For monthly_flex
-  hours: number      // monthly hours
-  term: MonthlyFlexTerm  // commitment term in months (for flex)
-  // For project
-  projectMonthlyHours: number
+  options: RabornSolutionOption[]   // always length 2
   recommended: boolean
   color: string
   accentBg: string
@@ -115,37 +119,40 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     tier: 'focused',
     name: 'Focused Solution',
     description: 'Targeted scope addressing your highest-priority needs.',
-    hours: 20,
-    term: 6,
-    projectMonthlyHours: 15,
     recommended: false,
     color: '#EF4444',
     accentBg: '#FEF2F2',
     accentText: '#B91C1C',
+    options: [
+      { id: 'focused-a', label: 'Option A', hours: 20, term: 6,  projectMonthlyHours: 15 },
+      { id: 'focused-b', label: 'Option B', hours: 25, term: 12, projectMonthlyHours: 20 },
+    ],
   },
   {
     tier: 'recommended',
     name: 'Balanced Solution',
     description: 'Balanced coverage to deliver meaningful results across your key initiatives.',
-    hours: 40,
-    term: 12,
-    projectMonthlyHours: 25,
     recommended: true,
     color: '#00CFF8',
     accentBg: '#ECFEFF',
     accentText: '#0E7490',
+    options: [
+      { id: 'balanced-a', label: 'Option A', hours: 40, term: 12, projectMonthlyHours: 25 },
+      { id: 'balanced-b', label: 'Option B', hours: 50, term: 24, projectMonthlyHours: 30 },
+    ],
   },
   {
     tier: 'expanded',
     name: 'Expanded Solution',
     description: 'Full-scope engagement with maximum capacity and strategic depth.',
-    hours: 80,
-    term: 12,
-    projectMonthlyHours: 50,
     recommended: false,
     color: '#10B981',
     accentBg: '#F0FDF4',
     accentText: '#15803D',
+    options: [
+      { id: 'expanded-a', label: 'Option A', hours: 80,  term: 12, projectMonthlyHours: 50 },
+      { id: 'expanded-b', label: 'Option B', hours: 100, term: 24, projectMonthlyHours: 60 },
+    ],
   },
 ]
 
@@ -159,4 +166,131 @@ export interface RabornPricingData {
 export const DEFAULT_RABORN_PRICING: RabornPricingData = {
   mode: 'monthly_flex',
   solutions: DEFAULT_SOLUTIONS,
+}
+
+// ── Migration helper for legacy single-option format ───────────────
+
+interface LegacySolution {
+  tier?: SolutionTier
+  name?: string
+  description?: string
+  hours?: number
+  term?: MonthlyFlexTerm
+  projectMonthlyHours?: number
+  options?: RabornSolutionOption[]
+  recommended?: boolean
+  color?: string
+  accentBg?: string
+  accentText?: string
+}
+
+/**
+ * Migrates a solution object to the new 2-option format. If the solution already has
+ * an `options` array, returns it as-is. Otherwise, builds `options` from legacy fields.
+ */
+export function migrateSolution(raw: LegacySolution, idx: number): RabornSolution {
+  const defaults = DEFAULT_SOLUTIONS[idx] ?? DEFAULT_SOLUTIONS[0]
+
+  // Already migrated
+  if (Array.isArray(raw.options) && raw.options.length >= 2) {
+    return {
+      tier: raw.tier ?? defaults.tier,
+      name: raw.name ?? defaults.name,
+      description: raw.description ?? defaults.description,
+      options: raw.options.slice(0, 2) as RabornSolutionOption[],
+      recommended: raw.recommended ?? defaults.recommended,
+      color: raw.color ?? defaults.color,
+      accentBg: raw.accentBg ?? defaults.accentBg,
+      accentText: raw.accentText ?? defaults.accentText,
+    }
+  }
+
+  // Legacy format → build 2 options, first from the saved values, second from defaults
+  const tier = raw.tier ?? defaults.tier
+  const firstOption: RabornSolutionOption = {
+    id: `${tier}-a`,
+    label: 'Option A',
+    hours: raw.hours ?? defaults.options[0].hours,
+    term: raw.term ?? defaults.options[0].term,
+    projectMonthlyHours: raw.projectMonthlyHours ?? defaults.options[0].projectMonthlyHours,
+  }
+  const secondOption: RabornSolutionOption = {
+    id: `${tier}-b`,
+    label: 'Option B',
+    hours: defaults.options[1].hours,
+    term: defaults.options[1].term,
+    projectMonthlyHours: defaults.options[1].projectMonthlyHours,
+  }
+
+  return {
+    tier,
+    name: raw.name ?? defaults.name,
+    description: raw.description ?? defaults.description,
+    options: [firstOption, secondOption],
+    recommended: raw.recommended ?? defaults.recommended,
+    color: raw.color ?? defaults.color,
+    accentBg: raw.accentBg ?? defaults.accentBg,
+    accentText: raw.accentText ?? defaults.accentText,
+  }
+}
+
+/**
+ * Migrates a full RabornPricingData blob. Safe to call on both old and new data.
+ */
+export function migrateRabornPricing(raw: unknown): RabornPricingData {
+  if (!raw || typeof raw !== 'object') return DEFAULT_RABORN_PRICING
+  const obj = raw as { mode?: PricingMode; solutions?: LegacySolution[] }
+  const mode: PricingMode = obj.mode === 'project' ? 'project' : 'monthly_flex'
+  const solutions = Array.isArray(obj.solutions) && obj.solutions.length > 0
+    ? obj.solutions.map((s, i) => migrateSolution(s, i))
+    : DEFAULT_SOLUTIONS
+  return { mode, solutions }
+}
+
+// ── Pricing calculation helpers ──────────────────────────────────
+
+export interface OptionPricing {
+  monthlyCost: number
+  discount: number
+  totalCost: number
+  savings: number
+  agreementLabel: string
+  hoursLabel: string
+}
+
+export function calculateOptionPricing(
+  option: RabornSolutionOption,
+  mode: PricingMode
+): OptionPricing {
+  if (mode === 'monthly_flex') {
+    const row = lookupMonthlyFlex(option.hours)
+    const monthlyCost = row?.monthly[option.term] ?? 0
+    const discount = row?.discount[option.term] ?? 0
+    const totalCost = monthlyCost * option.term
+    const fullPrice = (row?.monthly[3] ?? 0) * option.term
+    const savings = Math.max(0, fullPrice - totalCost)
+    return {
+      monthlyCost,
+      discount,
+      totalCost,
+      savings,
+      agreementLabel: `${option.term}-Month Agreement`,
+      hoursLabel: `${option.hours} Hours / month`,
+    }
+  } else {
+    const row = lookupProject(option.projectMonthlyHours)
+    const monthlyCost = row?.monthlyCost ?? 0
+    const discount = row?.discount ?? 0
+    const totalCost = row?.totalCost ?? 0
+    const fullPrice = row ? (row.monthlyCost / Math.max(1 - row.discount, 0.0001)) * 6 : 0
+    const savings = Math.max(0, fullPrice - totalCost)
+    return {
+      monthlyCost,
+      discount,
+      totalCost,
+      savings,
+      agreementLabel: '6-Month Agreement',
+      hoursLabel: `${row?.totalHours ?? 0} Total Hours`,
+    }
+  }
 }

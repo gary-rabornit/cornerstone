@@ -60,6 +60,7 @@ export async function GET(
           signedByEmail: proposal.clientAccess.signedByEmail,
           signedByTitle: proposal.clientAccess.signedByTitle,
           signedByPhone: proposal.clientAccess.signedByPhone,
+          selectedPlanLabel: proposal.clientAccess.selectedPlanLabel,
           signatureImage: proposal.clientAccess.signatureImage,
           signatureMode: proposal.clientAccess.signatureMode,
           ipAddress: proposal.clientAccess.ipAddress,

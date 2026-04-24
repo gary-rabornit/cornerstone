@@ -2,7 +2,7 @@ import { formatCurrencyDetailed } from '@/lib/utils'
 import { getCompanyBranding } from '@/lib/companies'
 import type { ProposalSection, PricingItem, ServiceItem, PricingTier } from '@/types'
 import { RabornPricingDisplay } from '@/components/proposals/raborn-pricing-display'
-import type { RabornPricingData } from '@/lib/raborn-pricing'
+import { migrateRabornPricing, type RabornPricingData } from '@/lib/raborn-pricing'
 import {
   Globe,
   Search,
@@ -81,6 +81,10 @@ interface ProposalRendererProps {
   companyName: string
   createdAt: string
   showBranding: boolean
+
+  // Optional Raborn pricing selection (client signing flow)
+  selectedPlanId?: string | null
+  onSelectPlan?: (planId: string, label: string, solutionName: string) => void
 }
 
 function parseCoverContent(content: string): {
@@ -133,6 +137,8 @@ export function ProposalRenderer({
   companyName,
   createdAt,
   showBranding,
+  selectedPlanId,
+  onSelectPlan,
 }: ProposalRendererProps) {
   const branding = getCompanyBranding(company)
   const sections = safeParseArray<ProposalSection>(rawSections)
@@ -146,7 +152,7 @@ export function ProposalRenderer({
       const raw = typeof rawPricingTiers === 'string' ? rawPricingTiers : JSON.stringify(rawPricingTiers)
       const parsed = JSON.parse(raw)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'mode' in parsed) {
-        rabornPricing = parsed as RabornPricingData
+        rabornPricing = migrateRabornPricing(parsed)
       }
     } catch {}
   }
@@ -382,6 +388,13 @@ export function ProposalRenderer({
             data={rabornPricing}
             accentColor={branding.accentColor}
             primaryColor={branding.primaryColor}
+            selectedPlanId={selectedPlanId}
+            onSelectPlan={
+              onSelectPlan
+                ? (option, solutionName) =>
+                    onSelectPlan(option.id, option.label, solutionName)
+                : undefined
+            }
           />
         </div>
       )}

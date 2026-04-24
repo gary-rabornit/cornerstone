@@ -36,6 +36,7 @@ interface SignedProposalPDFProps {
     signedByEmail: string | null
     signedByTitle: string | null
     signedByPhone: string | null
+    selectedPlanLabel: string | null
     signatureImage: string | null
     signatureMode: string | null
     ipAddress: string | null
@@ -395,6 +396,12 @@ export function SignedProposalPDF({ proposal, access, rabornLogoUrl }: SignedPro
               <Text style={styles.certLabel}>Reference ID</Text>
               <Text style={styles.certValueMono}>{access.id.slice(0, 12).toUpperCase()}</Text>
             </View>
+            {access.selectedPlanLabel && (
+              <View style={styles.certColFull}>
+                <Text style={styles.certLabel}>Selected Plan</Text>
+                <Text style={[styles.certValue, { color: '#0891B2' }]}>{access.selectedPlanLabel}</Text>
+              </View>
+            )}
             <View style={styles.certColFull}>
               <Text style={styles.certLabel}>Document Hash (SHA-256)</Text>
               <Text style={styles.certValueMono}>{access.documentHash || '—'}</Text>

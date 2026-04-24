@@ -27,6 +27,12 @@ interface SignatureSectionProps {
   clientCompanyName?: string
   dealValue?: number
   rabornCompany: string
+
+  // When true, the client must select one plan before signing
+  requiresPlanSelection?: boolean
+  selectedPlanId?: string | null
+  selectedPlanLabel?: string | null
+  selectedSolutionName?: string | null
 }
 
 type SignatureMode = 'draw' | 'type'
@@ -38,6 +44,10 @@ export function SignatureSection({
   clientCompanyName,
   dealValue,
   rabornCompany,
+  requiresPlanSelection = false,
+  selectedPlanId,
+  selectedPlanLabel,
+  selectedSolutionName,
 }: SignatureSectionProps) {
   const [mode, setMode] = useState<SignatureMode>('type')
   const [fullName, setFullName] = useState('')
@@ -90,6 +100,9 @@ export function SignatureSection({
   async function handleSign() {
     // Collect all missing fields so the user can see everything they still need
     const missing: string[] = []
+    if (requiresPlanSelection && !selectedPlanId) {
+      missing.push('Plan selection (scroll up and pick a plan)')
+    }
     if (!fullName.trim()) missing.push('Full Legal Name')
     if (!email.trim()) missing.push('Email')
     if (!title.trim()) missing.push('Title / Position')
@@ -120,6 +133,9 @@ export function SignatureSection({
           signatureImage,
           signatureMode: mode,
           consentedToElectronicSig: true,
+          selectedPlanId: selectedPlanId || null,
+          selectedPlanLabel: selectedPlanLabel || null,
+          selectedSolutionName: selectedSolutionName || null,
         }),
       })
 
@@ -284,6 +300,31 @@ export function SignatureSection({
               </div>
             )}
           </div>
+
+          {/* Selected Plan confirmation */}
+          {requiresPlanSelection && (
+            <div
+              className={`rounded-lg border-2 px-4 py-3 mt-2 ${
+                selectedPlanId
+                  ? 'border-green-200 bg-green-50'
+                  : 'border-amber-200 bg-amber-50'
+              }`}
+            >
+              <p className={`text-xs font-semibold uppercase tracking-wide ${selectedPlanId ? 'text-green-800' : 'text-amber-800'}`}>
+                Selected Plan
+              </p>
+              {selectedPlanId ? (
+                <p className="mt-1 text-sm font-semibold text-green-900">
+                  ✓ {selectedSolutionName} · {selectedPlanLabel}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm font-medium text-amber-800">
+                  No plan selected yet. Please scroll up and pick one of the offered plans.
+                </p>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-gray-500 pt-2 border-t border-gray-100">
             By signing below, you agree to the full terms detailed in the proposal above.
           </p>

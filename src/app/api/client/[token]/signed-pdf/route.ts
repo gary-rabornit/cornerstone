@@ -70,6 +70,7 @@ export async function GET(
           signedByEmail: clientAccess.signedByEmail,
           signedByTitle: clientAccess.signedByTitle,
           signedByPhone: clientAccess.signedByPhone,
+          selectedPlanLabel: clientAccess.selectedPlanLabel,
           signatureImage: clientAccess.signatureImage,
           signatureMode: clientAccess.signatureMode,
           ipAddress: clientAccess.ipAddress,

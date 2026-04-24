@@ -33,6 +33,7 @@ interface CertificatePDFProps {
     signedByEmail: string | null
     signedByTitle: string | null
     signedByPhone: string | null
+    selectedPlanLabel: string | null
     signatureImage: string | null
     signatureMode: string | null
     ipAddress: string | null
@@ -212,6 +213,12 @@ export function CertificatePDF({ proposal, access, rabornLogoUrl }: CertificateP
             <Text style={styles.label}>Reference ID</Text>
             <Text style={styles.valueMono}>{access.id.slice(0, 12).toUpperCase()}</Text>
           </View>
+          {access.selectedPlanLabel && (
+            <View style={styles.colFull}>
+              <Text style={styles.label}>Selected Plan</Text>
+              <Text style={[styles.value, { color: '#0891B2' }]}>{access.selectedPlanLabel}</Text>
+            </View>
+          )}
           {access.documentHash && (
             <View style={styles.colFull}>
               <Text style={styles.label}>Document Hash (SHA-256)</Text>
