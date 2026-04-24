@@ -257,36 +257,51 @@ function SolutionCard({
         {mode === 'monthly_flex' ? (
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-              Monthly Hours
+              Monthly Hours <span className="text-red-500 font-normal">*</span>
             </label>
             <select
-              value={solution.hours}
-              onChange={(e) => onChange({ hours: parseInt(e.target.value) })}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none"
+              value={solution.hours || ''}
+              onChange={(e) => onChange({ hours: parseInt(e.target.value) || 0 })}
+              className={cn(
+                'w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none',
+                solution.hours > 0 ? 'border-gray-200' : 'border-red-400 bg-red-50/40'
+              )}
             >
+              <option value="" disabled>Select monthly hours...</option>
               {MONTHLY_FLEX_ROWS.map((r) => (
                 <option key={r.hours} value={r.hours}>
                   {r.hours} hrs / month
                 </option>
               ))}
             </select>
+            {solution.hours <= 0 && (
+              <p className="mt-1 text-xs text-red-600 font-medium">Required — please select monthly hours.</p>
+            )}
           </div>
         ) : (
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-              Monthly Hours <span className="text-gray-400 font-normal">(each option will override this from the top)</span>
+              Monthly Hours <span className="text-red-500 font-normal">*</span>
+              <span className="text-gray-400 font-normal ml-1">(each option overrides this from the top)</span>
             </label>
             <select
-              value={solution.projectMonthlyHours}
-              onChange={(e) => onChange({ projectMonthlyHours: parseFloat(e.target.value) })}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none"
+              value={solution.projectMonthlyHours || ''}
+              onChange={(e) => onChange({ projectMonthlyHours: parseFloat(e.target.value) || 0 })}
+              className={cn(
+                'w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#00CFF8] focus:ring-2 focus:ring-[#00CFF8]/20 focus:outline-none',
+                solution.projectMonthlyHours > 0 ? 'border-gray-200' : 'border-red-400 bg-red-50/40'
+              )}
             >
+              <option value="" disabled>Select monthly hours...</option>
               {PROJECT_ROWS.map((r) => (
                 <option key={r.monthlyHours} value={r.monthlyHours}>
                   {r.monthlyHours} hrs/mo · {r.totalHours} total
                 </option>
               ))}
             </select>
+            {solution.projectMonthlyHours <= 0 && (
+              <p className="mt-1 text-xs text-red-600 font-medium">Required — please select monthly hours.</p>
+            )}
           </div>
         )}
 

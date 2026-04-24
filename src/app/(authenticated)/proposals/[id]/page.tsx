@@ -25,6 +25,7 @@ import {
 import Link from 'next/link'
 import { getCompanyBranding } from '@/lib/companies'
 import { CompanyLogo } from '@/components/ui/company-logo'
+import { isRabornPricingValid, migrateRabornPricing } from '@/lib/raborn-pricing'
 
 interface ProposalData {
   id: string
@@ -200,9 +201,33 @@ export default function ProposalEditorPage() {
   }
 
   function openSendConfirm() {
+    if (!checkRabornPricingValid()) return
     setConfirmedEmail(proposal?.deal?.contactEmail || '')
     setSendError('')
     setConfirmSendOpen(true)
+  }
+
+  function checkRabornPricingValid(): boolean {
+    if (proposal?.pricingMode !== 'raborn') return true
+    try {
+      const raw = typeof proposal.pricingTiers === 'string'
+        ? proposal.pricingTiers
+        : JSON.stringify(proposal.pricingTiers)
+      const data = migrateRabornPricing(JSON.parse(raw))
+      if (!isRabornPricingValid(data)) {
+        alert('Please select Monthly Hours for every solution tier before proceeding. See the Pricing tab.')
+        return false
+      }
+    } catch {
+      alert('Pricing data could not be validated. Please review the Pricing tab.')
+      return false
+    }
+    return true
+  }
+
+  function handleSubmitForApproval() {
+    if (!checkRabornPricingValid()) return
+    setApprovalModalOpen(true)
   }
 
   async function confirmAndSend() {
@@ -357,7 +382,7 @@ export default function ProposalEditorPage() {
 
           {proposal.status === 'DRAFT' && (
             <button
-              onClick={() => setApprovalModalOpen(true)}
+              onClick={handleSubmitForApproval}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#625AED] px-3 py-2 text-sm font-semibold text-white hover:bg-[#5248d4] transition-colors"
             >
               <UserCheck className="h-4 w-4" />

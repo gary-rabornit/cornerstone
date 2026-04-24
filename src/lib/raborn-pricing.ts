@@ -112,8 +112,8 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     tier: 'focused',
     name: 'Focused Solution',
     description: 'Targeted scope addressing your highest-priority needs.',
-    hours: 20,
-    projectMonthlyHours: 15,
+    hours: 0,
+    projectMonthlyHours: 0,
     recommended: false,
     color: '#F97316',
     accentBg: '#FFF7ED',
@@ -123,8 +123,8 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     tier: 'recommended',
     name: 'Balanced Solution',
     description: 'Balanced coverage to deliver meaningful results across your key initiatives.',
-    hours: 40,
-    projectMonthlyHours: 25,
+    hours: 0,
+    projectMonthlyHours: 0,
     recommended: true,
     color: '#00CFF8',
     accentBg: '#ECFEFF',
@@ -134,14 +134,21 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
     tier: 'expanded',
     name: 'Expanded Solution',
     description: 'Full-scope engagement with maximum capacity and strategic depth.',
-    hours: 80,
-    projectMonthlyHours: 50,
+    hours: 0,
+    projectMonthlyHours: 0,
     recommended: false,
     color: '#10B981',
     accentBg: '#F0FDF4',
     accentText: '#15803D',
   },
 ]
+
+export function isRabornPricingValid(data: RabornPricingData): boolean {
+  if (data.mode === 'monthly_flex') {
+    return data.solutions.every(s => s.hours > 0)
+  }
+  return data.solutions.every(s => s.projectMonthlyHours > 0)
+}
 
 // ── Proposal data shape ────────────────────────────────────────────
 
