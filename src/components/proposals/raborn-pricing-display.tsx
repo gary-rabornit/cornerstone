@@ -70,15 +70,20 @@ export function RabornPricingDisplay({
 
               {/* Header */}
               <div
-                className="px-5 text-center flex items-center justify-center"
+                className="px-5 text-center flex flex-col items-center justify-center"
                 style={{
                   backgroundColor: `${sol.color}10`,
-                  height: '64px',
+                  height: '88px',
                 }}
               >
                 <h4 className="text-lg font-bold" style={{ color: sol.color }}>
                   {sol.name}
                 </h4>
+                {mode === 'monthly_flex' && (
+                  <p className="text-sm font-semibold mt-1" style={{ color: sol.color }}>
+                    {sol.hours} Hours / Month
+                  </p>
+                )}
               </div>
 
               {/* Description */}
@@ -107,8 +112,6 @@ export function RabornPricingDisplay({
                       key={option.id}
                       option={option}
                       label={option.label}
-                      agreementLabel={pricing.agreementLabel}
-                      hoursLabel={pricing.hoursLabel}
                       monthlyCost={pricing.monthlyCost}
                       totalCost={pricing.totalCost}
                       discount={pricing.discount}
@@ -142,8 +145,6 @@ export function RabornPricingDisplay({
 interface OptionCardProps {
   option: DerivedOption
   label: string
-  agreementLabel: string
-  hoursLabel: string
   monthlyCost: number
   totalCost: number
   discount: number
@@ -158,10 +159,7 @@ interface OptionCardProps {
 
 function OptionCard({
   label,
-  agreementLabel,
-  hoursLabel,
   monthlyCost,
-  totalCost,
   discount,
   savings,
   color,
@@ -189,34 +187,23 @@ function OptionCard({
       }`}
       style={borderStyle}
     >
-      {/* Option label + radio — fixed 48px */}
+      {/* Colored label + radio — fixed 64px */}
       <div
-        className="relative px-3 flex items-center justify-center border-b border-gray-100 bg-white"
-        style={{ height: '48px' }}
+        className="relative px-3 text-white text-center flex items-center justify-center"
+        style={{ backgroundColor: color, height: '64px' }}
       >
-        <span className="text-lg font-bold" style={{ color }}>{label}</span>
+        <span className="text-base font-bold tracking-tight">{label}</span>
         {isSelectable && (
           <span
             className="absolute right-3 h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors"
             style={{
-              borderColor: isSelected ? color : '#D1D5DB',
-              backgroundColor: isSelected ? color : 'transparent',
+              borderColor: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+              backgroundColor: isSelected ? '#FFFFFF' : 'transparent',
             }}
           >
-            {isSelected && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+            {isSelected && <Check className="h-2.5 w-2.5" style={{ color }} strokeWidth={3} />}
           </span>
         )}
-      </div>
-
-      {/* Agreement info — fixed 56px */}
-      <div
-        className="px-3 text-white text-center flex flex-col justify-center"
-        style={{ backgroundColor: color, height: '56px' }}
-      >
-        <p className="text-[10px] font-semibold opacity-90 uppercase tracking-wider">
-          {agreementLabel}
-        </p>
-        <p className="text-xs font-medium opacity-95 mt-0.5">{hoursLabel}</p>
       </div>
 
       {/* Discount highlight banner — fixed 48px, always rendered for alignment */}

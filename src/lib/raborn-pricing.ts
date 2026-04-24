@@ -178,7 +178,7 @@ export function deriveSolutionOptions(
   if (data.mode === 'monthly_flex') {
     return data.terms.map((term, i) => ({
       id: `${solution.tier}-${i}`,
-      label: `${term} Months`,
+      label: `${term}-Month Agreement`,
       hours: solution.hours,
       term,
       projectMonthlyHours: solution.projectMonthlyHours,
@@ -322,7 +322,7 @@ export function calculateOptionPricing(
       totalCost,
       savings,
       agreementLabel: `${option.term}-Month Agreement`,
-      hoursLabel: `${option.hours} Hours / month`,
+      hoursLabel: `${option.hours} Hours / Month`,
     }
   } else {
     const row = lookupProject(option.projectMonthlyHours)
