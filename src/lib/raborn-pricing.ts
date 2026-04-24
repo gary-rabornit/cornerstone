@@ -125,7 +125,7 @@ export const DEFAULT_SOLUTIONS: RabornSolution[] = [
   },
   {
     tier: 'recommended',
-    name: 'Recommended Solution',
+    name: 'Balanced Solution',
     description: 'Balanced coverage to deliver meaningful results across your key initiatives.',
     hours: 40,
     term: 12,
