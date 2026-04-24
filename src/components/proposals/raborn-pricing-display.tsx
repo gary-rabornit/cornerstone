@@ -208,12 +208,11 @@ function OptionCard({
 
       {/* Discount highlight banner — fixed 48px, always rendered for alignment */}
       <div
-        className="px-3 text-center flex flex-col justify-center border-y-2"
+        className="px-3 text-center flex flex-col justify-center border-y-2 text-white"
         style={{
-          backgroundColor: discount > 0 ? `${color}` : '#F9FAFB',
-          borderColor: discount > 0 ? `${color}80` : '#F3F4F6',
+          backgroundColor: color,
+          borderColor: `${color}80`,
           height: '48px',
-          color: discount > 0 ? '#FFFFFF' : '#9CA3AF',
         }}
       >
         {discount > 0 ? (
@@ -228,7 +227,7 @@ function OptionCard({
             )}
           </>
         ) : (
-          <p className="text-[10px] font-medium">No discount on this term</p>
+          <p className="text-xs font-medium opacity-95">No discount on this term</p>
         )}
       </div>
 
