@@ -72,6 +72,15 @@ export async function POST(
     },
   })
 
+  // Server-side enforcement: if the proposal uses Raborn pricing,
+  // the client MUST select one of the 6 options before signing.
+  if (status === 'SIGNED' && clientAccess?.proposal.pricingMode === 'raborn' && !selectedPlanId) {
+    return NextResponse.json(
+      { error: 'You must select one of the pricing options before signing.' },
+      { status: 400 }
+    )
+  }
+
   if (!clientAccess) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }

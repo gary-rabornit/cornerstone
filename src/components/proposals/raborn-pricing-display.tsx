@@ -1,7 +1,7 @@
 'use client'
 
 import { Check } from 'lucide-react'
-import { formatCurrencyDetailed } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import {
   calculateOptionPricing,
   deriveSolutionOptions,
@@ -234,7 +234,7 @@ function OptionCard({
             </p>
             {savings > 0 && (
               <p className="text-[10px] font-semibold mt-1 opacity-95">
-                Save {formatCurrencyDetailed(savings)}
+                Save {formatCurrency(savings)}
               </p>
             )}
           </>
@@ -252,7 +252,7 @@ function OptionCard({
           Total Monthly Price
         </p>
         <p className="text-xl font-bold mt-0.5" style={{ color }}>
-          {formatCurrencyDetailed(monthlyCost)}
+          {formatCurrency(monthlyCost)}
           <span className="text-xs font-normal text-gray-500">/mo</span>
         </p>
       </div>
