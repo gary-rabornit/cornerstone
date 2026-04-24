@@ -60,35 +60,44 @@ export function RabornPricingDisplay({
                 boxShadow: sol.recommended ? `0 4px 24px ${sol.color}25` : undefined,
               }}
             >
-              {/* Ribbon row (always rendered for alignment) */}
+              {/* Ribbon row — always rendered, 28px fixed */}
               <div
-                className="text-xs font-bold text-white text-center py-1.5 uppercase tracking-wider"
-                style={{ backgroundColor: sol.recommended ? sol.color : 'transparent' }}
+                className="text-xs font-bold text-white text-center uppercase tracking-wider flex items-center justify-center"
+                style={{
+                  backgroundColor: sol.recommended ? sol.color : 'transparent',
+                  height: '28px',
+                }}
               >
-                {sol.recommended ? '★ Recommended' : '\u00A0'}
+                {sol.recommended ? '★ Recommended' : ''}
               </div>
 
-              {/* Header with tier name — fixed height */}
+              {/* Header with tier name */}
               <div
-                className="px-5 py-4 text-center flex items-center justify-center h-[70px]"
-                style={{ backgroundColor: `${sol.color}10` }}
+                className="px-5 text-center flex items-center justify-center"
+                style={{
+                  backgroundColor: `${sol.color}10`,
+                  height: '64px',
+                }}
               >
                 <h4 className="text-lg font-bold" style={{ color: sol.color }}>
                   {sol.name}
                 </h4>
               </div>
 
-              {/* Description — fixed height so all cards match */}
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-center h-[120px]">
+              {/* Description */}
+              <div
+                className="px-5 border-b border-gray-100 flex items-center justify-center"
+                style={{ height: '140px' }}
+              >
                 <p className="text-sm text-gray-600 text-center leading-relaxed">
                   {sol.description}
                 </p>
               </div>
 
-              {/* Engagement details — fixed height */}
+              {/* Engagement details */}
               <div
-                className="px-5 py-5 text-white text-center flex flex-col justify-center h-[180px]"
-                style={{ backgroundColor: sol.color }}
+                className="px-5 text-white text-center flex flex-col justify-center"
+                style={{ backgroundColor: sol.color, height: '200px' }}
               >
                 <p className="text-xs font-semibold opacity-90 uppercase tracking-wider">
                   {mode === 'monthly_flex'
@@ -104,15 +113,18 @@ export function RabornPricingDisplay({
                   {formatCurrencyDetailed(monthlyCost)}
                   <span className="text-base font-normal opacity-80">/mo</span>
                 </p>
-                <p className="text-xs mt-1 opacity-90 h-4">
+                <p className="text-xs mt-1 opacity-90" style={{ height: '16px' }}>
                   {discount > 0
                     ? `${(discount * 100).toFixed(0)}% Discount${savings > 0 ? ` · ${formatCurrencyDetailed(savings)} Savings` : ''}`
-                    : '\u00A0'}
+                    : ''}
                 </p>
               </div>
 
-              {/* Total Cost — fixed height */}
-              <div className="px-5 py-5 bg-gray-50 text-center mt-auto h-[90px] flex flex-col justify-center">
+              {/* Total Cost */}
+              <div
+                className="px-5 bg-gray-50 text-center mt-auto flex flex-col justify-center"
+                style={{ height: '100px' }}
+              >
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Cost</p>
                 <p className="text-2xl font-bold mt-1" style={{ color: primaryColor }}>
                   {formatCurrencyDetailed(totalCost)}
