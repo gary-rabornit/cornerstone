@@ -73,14 +73,14 @@ export function RabornPricingDisplay({
                 className="px-5 text-center flex flex-col items-center justify-center"
                 style={{
                   backgroundColor: `${sol.color}10`,
-                  height: '88px',
+                  height: '112px',
                 }}
               >
-                <h4 className="text-lg font-bold" style={{ color: sol.color }}>
+                <h4 className="text-2xl font-bold" style={{ color: sol.color }}>
                   {sol.name}
                 </h4>
                 {mode === 'monthly_flex' && (
-                  <p className="text-sm font-semibold mt-1" style={{ color: sol.color }}>
+                  <p className="text-lg font-semibold mt-1.5" style={{ color: sol.color }}>
                     {sol.hours} Hours / Month
                   </p>
                 )}
