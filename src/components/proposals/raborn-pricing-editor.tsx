@@ -154,7 +154,7 @@ export function RabornPricingEditor({ value, onChange }: Props) {
           Solution Tiers
         </label>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {solutions.map((sol, idx) => (
             <SolutionCard
               key={sol.tier}
