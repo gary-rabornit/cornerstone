@@ -182,13 +182,16 @@ function OptionCard({
     <Tag
       type={isSelectable ? 'button' : undefined}
       onClick={isSelectable ? onSelect : undefined}
-      className={`w-full rounded-lg border-2 overflow-hidden text-left transition-all ${
+      className={`w-full rounded-lg border-2 overflow-hidden text-left transition-all flex flex-col ${
         isSelectable ? 'cursor-pointer hover:shadow-md' : ''
       }`}
       style={borderStyle}
     >
-      {/* Option label + radio */}
-      <div className="px-3 py-2 bg-white flex items-center justify-between border-b border-gray-100">
+      {/* Option label + radio — fixed 36px */}
+      <div
+        className="px-3 flex items-center justify-between border-b border-gray-100 bg-white"
+        style={{ height: '36px' }}
+      >
         <span className="text-xs font-bold" style={{ color }}>{label}</span>
         {isSelectable && (
           <span
@@ -203,30 +206,55 @@ function OptionCard({
         )}
       </div>
 
-      {/* Pricing */}
-      <div className="px-3 py-3 text-white text-center" style={{ backgroundColor: color }}>
+      {/* Agreement info — fixed 56px */}
+      <div
+        className="px-3 text-white text-center flex flex-col justify-center"
+        style={{ backgroundColor: color, height: '56px' }}
+      >
         <p className="text-[10px] font-semibold opacity-90 uppercase tracking-wider">
           {agreementLabel}
         </p>
         <p className="text-xs font-medium opacity-95 mt-0.5">{hoursLabel}</p>
-        <p className="text-xl font-bold mt-1.5">
-          {formatCurrencyDetailed(monthlyCost)}
-          <span className="text-xs font-normal opacity-80">/mo</span>
-        </p>
-        {discount > 0 && (
-          <p className="text-[10px] mt-0.5 opacity-90">
-            {(discount * 100).toFixed(0)}% off
-            {savings > 0 && ` · ${formatCurrencyDetailed(savings)} saved`}
-          </p>
+      </div>
+
+      {/* Discount highlight banner — fixed 48px, always rendered for alignment */}
+      <div
+        className="px-3 text-center flex flex-col justify-center border-y-2"
+        style={{
+          backgroundColor: discount > 0 ? `${color}` : '#F9FAFB',
+          borderColor: discount > 0 ? `${color}80` : '#F3F4F6',
+          height: '48px',
+          color: discount > 0 ? '#FFFFFF' : '#9CA3AF',
+        }}
+      >
+        {discount > 0 ? (
+          <>
+            <p className="text-lg font-extrabold leading-none tracking-tight">
+              {(discount * 100).toFixed(0)}% DISCOUNT
+            </p>
+            {savings > 0 && (
+              <p className="text-[10px] font-semibold mt-0.5 opacity-95">
+                Save {formatCurrencyDetailed(savings)}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-[10px] font-medium">No discount on this term</p>
         )}
       </div>
 
-      {/* Total */}
-      <div className="px-3 py-2" style={{ backgroundColor: accentBg }}>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold" style={{ color: accentText }}>Total</span>
-          <span className="text-sm font-bold text-gray-900">{formatCurrencyDetailed(totalCost)}</span>
-        </div>
+      {/* Total Monthly Price — the featured metric, fixed 72px */}
+      <div
+        className="px-3 text-center flex flex-col justify-center mt-auto"
+        style={{ backgroundColor: accentBg, height: '72px' }}
+      >
+        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accentText }}>
+          Total Monthly Price
+        </p>
+        <p className="text-xl font-bold mt-0.5" style={{ color }}>
+          {formatCurrencyDetailed(monthlyCost)}
+          <span className="text-xs font-normal text-gray-500">/mo</span>
+        </p>
       </div>
     </Tag>
   )
