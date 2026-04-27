@@ -227,12 +227,6 @@ export function ProposalRenderer({
 
         {/* Rep info at bottom */}
         <div className="px-10 py-7 bg-gray-50 border-t border-gray-100">
-          <p
-            className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
-            style={{ color: branding.accentColor }}
-          >
-            Prepared by
-          </p>
           <div className="flex items-start gap-5">
             <div
               className="w-1 self-stretch rounded-full"
