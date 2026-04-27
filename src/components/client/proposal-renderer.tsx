@@ -28,6 +28,7 @@ import {
   Target,
   Zap,
   Settings,
+  Phone,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -241,14 +242,49 @@ export function ProposalRenderer({
         </div>
 
         {/* Rep info at bottom */}
-        <div className="px-10 py-6 bg-gray-50 border-t border-gray-100">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-500">
-            {repName && (
-              <span className="font-medium text-gray-700">{repName}</span>
-            )}
-            {repTitleValue && <span>{repTitleValue}</span>}
-            {repPhone && <span>{repPhone}</span>}
-            {repEmail && <span>{repEmail}</span>}
+        <div className="px-10 py-7 bg-gray-50 border-t border-gray-100">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
+            style={{ color: branding.accentColor }}
+          >
+            Prepared by
+          </p>
+          <div className="flex items-start gap-5">
+            <div
+              className="w-1 self-stretch rounded-full"
+              style={{ backgroundColor: branding.accentColor }}
+            />
+            <div className="space-y-2">
+              <div>
+                {repName && (
+                  <p
+                    className="text-lg font-semibold leading-tight"
+                    style={{ color: branding.primaryColor }}
+                  >
+                    {repName}
+                  </p>
+                )}
+                {repTitleValue && (
+                  <p className="text-sm text-gray-600 mt-0.5">{repTitleValue}</p>
+                )}
+              </div>
+              {(repPhone || repEmail) && (
+                <div className="flex flex-col gap-1 pt-1 text-sm text-gray-600">
+                  {repPhone && (
+                    <span className="inline-flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5" style={{ color: branding.accentColor }} />
+                      {repPhone}
+                    </span>
+                  )}
+                  {repEmail && (
+                    <span className="inline-flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5" style={{ color: branding.accentColor }} />
+                      {repEmail}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
